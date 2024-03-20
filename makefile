@@ -1,6 +1,6 @@
 all: blink softTone
 
-PATH_CC=/media/khouloud/Antoine-USB/objco/CCR3/wiring/tools-master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin
+PATH_CC=$(CURDIR)/tools-master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin
 
 CCC=$(PATH_CC)/arm-linux-gnueabihf-gcc
 
