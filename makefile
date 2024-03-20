@@ -18,6 +18,9 @@ softTone: softTone.c
 example: example.c 
 	$(CCC) $^ -o $@ -lwiringPi -lwiringPiDev -lpthread -lm -lcrypt -lrt 
 	
+server:server.c
+	$(CCC) $^ -o $@ -lportaudio -lm
+	
 install : blink softTone
 	scp example softTone pi@192.168.137.40:/home/pi/Desktop/
 
