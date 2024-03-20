@@ -1,3 +1,5 @@
+# sudo apt-get install portaudio19-dev
+
 all: blink softTone
 
 PATH_CC=$(CURDIR)/tools-master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin
@@ -19,7 +21,8 @@ example: example.c
 	$(CCC) $^ -o $@ -lwiringPi -lwiringPiDev -lpthread -lm -lcrypt -lrt 
 	
 server:server.c
-	$(CCC) $^ -o $@ -lportaudio -lm
+	$(CCC) $^ -o $@ -lportaudio -lm -pthread -lrt
+	gcc $^ -o $@.exe -lportaudio -lm -pthread -lrt
 	
 install : blink softTone
 	scp example softTone pi@192.168.137.40:/home/pi/Desktop/
