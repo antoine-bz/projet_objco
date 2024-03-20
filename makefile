@@ -12,20 +12,20 @@ CFLAGS=-I$(TARGET_WPI)/include
 LDFLAGS=-L$(TARGET_WPI)/lib 
 
 blink: blink.c 
-	$(CCC) $^ -o $@ -lwiringPi
+	$(CCC) $^.exe -o $@ -lwiringPi
 	
 softTone: softTone.c 
-	$(CCC) $^ -o $@  -lwiringPi	
+	$(CCC) $^.exe -o $@  -lwiringPi	
 
 example: example.c 
-	$(CCC) $^ -o $@ -lwiringPi -lwiringPiDev -lpthread -lm -lcrypt -lrt 
+	$(CCC) $^.exe -o $@ -lwiringPi -lwiringPiDev -lpthread -lm -lcrypt -lrt 
 	
 server:server.c
-	$(CCC) $^ -o $@ -lportaudio -lm -pthread -lrt
 	gcc $^ -o $@.exe -lportaudio -lm -pthread -lrt
+# $(CCC) $^ -o $@ -lportaudio -lm -pthread -lrt
 	
 install : blink softTone
 	scp example softTone pi@192.168.137.40:/home/pi/Desktop/
 
 clean: 
-	rm -rf blink softTone example
+	rm -rf blink softTone example *.exe

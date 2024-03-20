@@ -5,14 +5,12 @@
 #define SAMPLE_RATE  (44100)
 #define FRAMES_PER_BUFFER (64)
 #define NUM_CHANNELS    (2)
-#define PA_SAMPLE_TYPE  paFloat32
-typedef float SAMPLE;
 
-typedef struct {
+typedef struct
+{
     FILE *file;
-    int frameIndex;
-    int totalFrames;
-} paTestData;
+}
+paUserData;
 
 static int paCallback(const void *inputBuffer, void *outputBuffer,
                       unsigned long framesPerBuffer,
@@ -20,16 +18,21 @@ static int paCallback(const void *inputBuffer, void *outputBuffer,
                       PaStreamCallbackFlags statusFlags,
                       void *userData)
 {
-    paTestData *data = (paTestData*)userData;
-    SAMPLE *out = (SAMPLE*)outputBuffer;
-    (void) inputBuffer; /* Prevent unused variable warning. */
+    paUserData *data = (paUserData*)userData;
+    float *out = (float*)outputBuffer;
+    (void) inputBuffer;
 
-    size_t framesToRead = framesPerBuffer;
-    size_t framesRead = fread(out, sizeof(SAMPLE), framesToRead * NUM_CHANNELS, data->file) / NUM_CHANNELS;
-    
-    if (framesRead < framesToRead) {
-        printf("Reached end of file.\n");
+    if (data->file == NULL) {
+        printf("File not available.\n");
         return paComplete;
+    }
+
+    size_t bytesRead = fread(out, sizeof(float), framesPerBuffer * NUM_CHANNELS, data->file);
+
+    if (bytesRead < framesPerBuffer * NUM_CHANNELS) {
+        printf("End of file reached.\n");
+        fclose(data->file);
+        data->file = NULL;
     }
 
     return paContinue;
@@ -37,59 +40,66 @@ static int paCallback(const void *inputBuffer, void *outputBuffer,
 
 int main(int argc, char *argv[])
 {
-    PaStream *stream;
-    PaError err;
-    paTestData data;
-    const char *filename = "example.wav";
-
-    data.file = fopen(filename, "rb");
-    if (!data.file) {
-        printf("Could not open file %s\n", filename);
+    if (argc != 2) {
+        printf("Usage: %s <audio_file>\n", argv[0]);
         return 1;
     }
 
-    fseek(data.file, 0, SEEK_END);
-    data.totalFrames = ftell(data.file) / (NUM_CHANNELS * sizeof(SAMPLE));
-    fseek(data.file, 0, SEEK_SET);
-
+    PaError err;
+    paUserData data = {0};
+    PaStream *stream;
     err = Pa_Initialize();
-    if (err != paNoError) goto error;
+    if (err != paNoError) {
+        fprintf(stderr, "PortAudio error: %s\n", Pa_GetErrorText(err));
+        return 1;
+    }
+
+    data.file = fopen(argv[1], "rb");
+    if (data.file == NULL) {
+        printf("Error opening file %s\n", argv[1]);
+        return 1;
+    }
 
     err = Pa_OpenDefaultStream(&stream,
-                                0,          /* no input channels */
-                                NUM_CHANNELS,
-                                PA_SAMPLE_TYPE,
-                                SAMPLE_RATE,
-                                FRAMES_PER_BUFFER,        /* frames per buffer */
-                                paCallback,
-                                &data);
-    if (err != paNoError) goto error;
+                               0,
+                               NUM_CHANNELS,
+                               paFloat32,
+                               SAMPLE_RATE,
+                               FRAMES_PER_BUFFER,
+                               paCallback,
+                               &data);
+    if (err != paNoError) {
+        fprintf(stderr, "PortAudio error: %s\n", Pa_GetErrorText(err));
+        return 1;
+    }
 
     err = Pa_StartStream(stream);
-    if (err != paNoError) goto error;
+    if (err != paNoError) {
+        fprintf(stderr, "PortAudio error: %s\n", Pa_GetErrorText(err));
+        return 1;
+    }
 
-    printf("Playing file %s ...\n", filename);
-    while (Pa_IsStreamActive(stream)) {
-        Pa_Sleep(100);
+    printf("Playing file %s...\n", argv[1]);
+    printf("Press Ctrl+C to stop.\n");
+
+    while (1) {
+        Pa_Sleep(1000);
+    }
+
+    err = Pa_StopStream(stream);
+    if (err != paNoError) {
+        fprintf(stderr, "PortAudio error: %s\n", Pa_GetErrorText(err));
+        return 1;
     }
 
     err = Pa_CloseStream(stream);
-    if (err != paNoError) goto error;
+    if (err != paNoError) {
+        fprintf(stderr, "PortAudio error: %s\n", Pa_GetErrorText(err));
+        return 1;
+    }
 
     Pa_Terminate();
     fclose(data.file);
+
     return 0;
-
-error:
-    fprintf(stderr, "An error occured while using the portaudio stream\n");
-    fprintf(stderr, "Error number: %d\n", err);
-    fprintf(stderr, "Error message: %s\n", Pa_GetErrorText(err));
-    if (stream) {
-        Pa_AbortStream(stream);
-        Pa_CloseStream(stream);
-    }
-    Pa_Terminate();
-    if (data.file) fclose(data.file);
-    return -1;
 }
-
