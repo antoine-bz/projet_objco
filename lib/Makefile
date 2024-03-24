@@ -1,5 +1,7 @@
-all : session.o data.o reqRep.o
+all : session.o data.o reqRep.o audioStream.o
 
+audioStream.o: audioStream.c audioStream.h
+	gcc -c audioStream.c -lvlc
 
 reqRep.o: reqRep.c reqRep.h
 	gcc -c reqRep.c

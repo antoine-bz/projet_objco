@@ -5,7 +5,17 @@
 */
 
 #include "./lib/reqRep.h"
+#include "./lib/audioStream.h"
 
+#include <stdio.h>
+#include <dirent.h>
+#include <unistd.h>
+//#include <wiringPi.h>
+
+#define PIN_IN_GAUCHE 6
+#define PIN_IN_DROITE 24
+#define PIN_IN_HAUT 25
+#define PIN_IN_BAS 23
 
 // on cree la memoire partagee
 /**
@@ -82,10 +92,17 @@ static void signalHandler(int sig);
 void sendPlaylist(socket_t *client_socket);
 
 /**
+ * \fn int buttonHandler(pid_t pid)
+ * \brief Fonction qui gère les boutons
+ * \param pid PID du processus fils
+ * \return int
+*/
+int buttonHandler(pid_t pid);
+
+/**
  * \fn void sendCurrentMusic(socket_t *client_socket)
  * \brief Fonction qui envoie la musique en cours de lecture au client
  * \param client_socket Pointeur sur le socket du client
  * \return void
- * \details Cette fonction envoie la musique en cours de lecture au client
 */
-void sendCurrentMusic(socket_t *client_socket);
+void sendCurrentMusic(socket_t *client_socket) ;
