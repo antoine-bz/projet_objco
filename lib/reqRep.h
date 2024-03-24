@@ -50,17 +50,17 @@ typedef char buffer_t[MAX_BUFF];
 // Définir des constantes pour les types de messages
 /**
  * \def PLAYLIST_RETURN
- * \brief Type de message pour retourner la playlist
+ * \brief Type de message pour retourner une playlist
  * \def SEND_MUSIC_CHOICE
- * \brief Type de message pour envoyer le choix de musique
+ * \brief Type de message pour envoyer un choix de musique
  * \def SEND_MUSIC_REQUEST
- * \brief Type de message pour envoyer la demande de musique
+ * \brief Type de message pour envoyer une demande de musique
  * \def MUSIC_RETURN
- * \brief Type de message pour retourner la musique
- * \def SEND_CURRENT_TIME_REQ
- * \brief Type de message pour envoyer la demande de temps courant
- * \def CURRENT_TIME_RETURN
- * \brief Type de message pour retourner le temps courant
+ * \brief Type de message pour retourner une musique
+ * \def REQUEST_PLAYLIST
+ * \brief Type de message pour demander une playlist
+ * \def OK
+ * \brief Type de message pour dire que tout va bien
  * \def QUIT
  * \brief Type de message pour quitter
  * \details Ces constantes sont utilisées pour les types de messages
@@ -69,7 +69,8 @@ typedef char buffer_t[MAX_BUFF];
 #define SEND_MUSIC_CHOICE     2
 #define SEND_MUSIC_REQUEST    3
 #define MUSIC_RETURN          4
-#define REQUEST_PLAYLIST      7
+#define REQUEST_PLAYLIST      5
+#define OK                    6
 #define QUIT                  8
 
 
@@ -84,7 +85,7 @@ typedef char buffer_t[MAX_BUFF];
 */
 typedef struct MusicMessage {
     int type; // type de message
-    char current_music[MAX_BUFF]; // nom de la chanson courante
+    int current_music; // nom de la chanson courante
     int playlist_size; // taille de la playlist
     char playlist[MAX_BUFF][MAX_BUFF]; // nom de la chanson courante
 } MusicMessage;

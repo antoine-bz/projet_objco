@@ -17,6 +17,8 @@
 #define PIN_IN_HAUT 25
 #define PIN_IN_BAS 23
 
+#define UNDEFINED -1
+
 // on cree la memoire partagee
 /**
  * \var int *elapsedTime
@@ -110,8 +112,11 @@ void sendCurrentMusic(socket_t *client_socket) ;
 
 
 
-
+/**
+ * \fn MusicMessage retrievePlaylist() 
+ * \brief Fonction qui récupère la playlist
+ * \return MusicMessage
+ * \details Cette fonction récupère la playlist du dossier playlist
+*/
 MusicMessage retrievePlaylist();
-
-int findMusic(MusicMessage musicMessage, char *musicName);
 

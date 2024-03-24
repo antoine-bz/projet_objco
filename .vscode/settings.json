@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "reqrep.h": "c"
+        "reqrep.h": "c",
+        "unistd.h": "c",
+        "system_error": "c"
     }
 }

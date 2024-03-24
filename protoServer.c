@@ -32,13 +32,13 @@ void server (char *addrIPsrv, short server_port){
 
     // on initialise les variables
     currentMusic = (int *)(shm_ptr + sizeof(int));
-    isPlaying = (int *)(shm_ptr + sizeof(int) + sizeof(char) * MAX_BUFF);
-    isChoosing = (int *)(shm_ptr + sizeof(int) + sizeof(char) * MAX_BUFF + sizeof(int));
-    musicPid = (int *)(shm_ptr + sizeof(int) + sizeof(char) * MAX_BUFF + sizeof(int));
+    isPlaying = (int *)(shm_ptr + sizeof(int) +sizeof(int) );
+    isChoosing = (int *)(shm_ptr + sizeof(int) + sizeof(int) + sizeof(int));
+    musicPid = (int *)(shm_ptr + sizeof(int) + sizeof(int) + sizeof(int) + sizeof(int));
 
 
     // on initialise les variables
-    *currentMusic = 0;
+    *currentMusic = UNDEFINED;
     *isPlaying = FALSE;
     *isChoosing = FALSE;
     *musicPid = 0;
@@ -71,6 +71,7 @@ void server (char *addrIPsrv, short server_port){
             printf("currentMusic: %d\n", *currentMusic);
             printf("isPlaying: %d\n", *isPlaying);
             printf("isChoosing: %d\n", *isChoosing);
+            printf("musicPid: %d\n", *musicPid);
             sleep(10);
         }
     }
@@ -134,18 +135,23 @@ void handle_client(socket_t *client_socket) {
         case SEND_MUSIC_CHOICE:
             printf("SEND_MUSIC_CHOICE received from client\n\n");
 
-            printf("Received choice %s from client\n\n", musicMessage.current_music);
+            printf("Received choice %d from client\n\n", musicMessage.current_music);
             // on met la musique choisie par le client dans currentMusic
             MusicMessage musicMessage2;
             musicMessage2 = retrievePlaylist();
-            *currentMusic = findMusic(musicMessage2, musicMessage.current_music);
-            envoyer(client_socket, "OK", NULL);
+            *currentMusic =  musicMessage.current_music;
+
+            musicMessage2.type = OK;
+            envoyer(client_socket, &musicMessage2, (pFct)serializeMusicMessage);
 
             break;
 
         case REQUEST_PLAYLIST:
             printf("REQUEST_PLAYLIST received from client\n\n");
             kill (*musicPid, SIGKILL);
+            *isPlaying = FALSE;
+            *currentMusic = UNDEFINED;
+            *isChoosing = TRUE;
             sendPlaylist(client_socket);
             break;
 
@@ -171,7 +177,7 @@ void sendCurrentMusic(socket_t *client_socket) {
     MusicMessage bufferMusic;
 
     bufferMusic = retrievePlaylist();
-    strcpy(bufferMusic.current_music, bufferMusic.playlist[*currentMusic]);
+    bufferMusic.current_music=*currentMusic;
 
     bufferMusic.type = MUSIC_RETURN;
     
@@ -181,8 +187,8 @@ void sendCurrentMusic(socket_t *client_socket) {
 
     envoyer(client_socket, &bufferMusic, (pFct) serializeMusicMessage);
 
-    recevoir(client_socket, buffer, NULL);
-    if (strcmp(buffer, "OK") != 0) {
+    recevoir(client_socket, &bufferMusic, (pFct) deserializeMusicMessage);
+    if (bufferMusic.type != OK) {
         exit(EXIT_FAILURE);
     }
 }
@@ -206,30 +212,36 @@ void sendPlaylist(socket_t *client_socket) {
     recevoir(client_socket, &musicMessage, (pFct)deserializeMusicMessage);
 
     // on met la musique choisie par le client dans currentMusic
-    for (int i = 0; i < musicMessage.playlist_size; i++) {
-        if (strcmp(musicMessage.playlist[i], musicMessage.current_music) == 0) {
-            *currentMusic = i;
-            break;
-        }
-    }
+    *currentMusic = musicMessage.current_music;
+
+    musicMessage.type = OK;
+    envoyer(client_socket, &musicMessage, (pFct)serializeMusicMessage);
+
 
     *isChoosing = FALSE;
+    *isChoosing = 0;
 
 }
 
 
 void myRadio(){
     MusicMessage musicMessage; 
-    int i = 0;
     pid_t musicPlayPid, buttonPid;
+    int i = 0;
+    
+    while(*currentMusic == UNDEFINED);
+    i = *currentMusic;
 
     // on recupere la playlist
     musicMessage = retrievePlaylist();
 
 
     while (1) {
+        
         // on attend que le client ait choisi une musique
-        while (*isChoosing == TRUE);
+        while (*isChoosing == TRUE){
+            usleep(1000);
+        }
 
 
         // on lance la musique
@@ -240,13 +252,14 @@ void myRadio(){
         } else
         if (musicPlayPid == 0) {
             *musicPid = getpid();
-
             *isPlaying = TRUE;
+
             // Construire le chemin complet du fichier
             char path[MAX_BUFF];
             snprintf(path, sizeof(path)+9, "playlist/%s", musicMessage.playlist[i]);
             printf("path: %s\n", path);
 
+            sleep(10);
             //streamAudioServer(path); // Jouer le fichier audio
             exit(EXIT_SUCCESS);
         }
@@ -263,18 +276,24 @@ void myRadio(){
 
 
         waitpid(musicPlayPid, NULL, 0);
+        kill(buttonPid, SIGKILL);
+        
 
         // on passe à la musique suivante
         isPlaying = FALSE;
-        i++;
+        printf("Playing next music...\n");
+
+        i++;  
         if (i == musicMessage.playlist_size) {
             i = 0;
         }
 
+        *currentMusic = i;
+
     }
     
     // on remet currentMusic à vide
-    *currentMusic = 0;
+    *currentMusic = UNDEFINED;
     *isPlaying = FALSE;
     *isChoosing = FALSE;
 
@@ -368,21 +387,9 @@ MusicMessage retrievePlaylist(){
         }
     }
     closedir(dir);
-
+    musicMessage.playlist_size = i;
     musicMessage.type = PLAYLIST_RETURN; // Assuming PLAYLIST_RETURN is defined elsewhere
     // You should set other fields of musicMessage as needed
 
     return musicMessage;
-}
-
-int findMusic(MusicMessage musicMessage, char *musicName) {
-    if (musicMessage.playlist_size == 0) {
-        return -1;
-    }
-    for (int i = 0; i < musicMessage.playlist_size; i++) {
-        if (strcmp(musicMessage.playlist[i], musicName) == 0) {
-            return i;
-        }
-    }
-    return -1;
 }

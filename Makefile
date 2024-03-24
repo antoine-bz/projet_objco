@@ -10,7 +10,7 @@ libServer.a : ./lib/session.o ./lib/data.o ./lib/reqRep.o ./lib/audioStream.o pr
 	ar -crs libServer.a ./lib/session.o ./lib/data.o ./lib/reqRep.o ./lib/audioStream.o protoServer.o 
 	rm -f *.o
 
-libClient.a : ./lib/session.o ./lib/data.o ./lib/reqRep.o ./lib/audioStream.o ./lib/protoClient.o
+libClient.a : ./lib/session.o ./lib/data.o ./lib/reqRep.o ./lib/audioStream.o ./protoClient.o
 	ar -crs libClient.a ./lib/session.o ./lib/data.o ./lib/reqRep.o protoClient.o
 	rm -f *.o
 
@@ -23,9 +23,12 @@ protoServer.o: protoServer.c protoServer.h
 protoClient.o: protoClient.c protoClient.h 
 	gcc -c protoClient.c
 
+testClient: libClient.a
+	gcc testClient.c -I. -L. -L/usr/lib/x86_64-linux-gnu/ -o testClient.exe -DCLIENT -lClient -lvlc -lao -lm -L./
+	rm -f *.a
+
 clean:
 	rm -f *.o 
-	rm -f serveur
-	rm -f client
+	rm -f *.exe
 	rm -f *.a
 	cd lib && make clean

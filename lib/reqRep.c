@@ -21,6 +21,12 @@ void deserializeMusicMessage(buffer_t buff, generic quoi)
     else if (strcmp(type, "SEND_MUSIC_REQUEST") == 0) {
         msg->type = SEND_MUSIC_REQUEST;
     }
+    else if (strcmp(type, "REQUEST_PLAYLIST") == 0) {
+        msg->type = REQUEST_PLAYLIST;
+    }
+    else if (strcmp(type, "OK") == 0) {
+        msg->type = OK;
+    }
     else {
         printf("Erreur de type de message");
     }
@@ -28,7 +34,12 @@ void deserializeMusicMessage(buffer_t buff, generic quoi)
 
     switch (msg->type)
     {
+    case MUSIC_RETURN:
     case PLAYLIST_RETURN: 
+        if (msg->type == MUSIC_RETURN) {
+            msg->current_music = atoi(strtok(NULL, "|"));
+            msg->playlist_size = atoi(strtok(NULL, "|"));
+        }
         char *token = strtok(NULL, "|"); // Récupérer la partie de la chaîne après le délimiteur '|'
         msg->playlist_size = atoi(token); // Convertir la taille de la playlist en entier
         token = strtok(NULL, "|"); // Récupérer la partie de la chaîne après le délimiteur '|'
@@ -55,13 +66,13 @@ void deserializeMusicMessage(buffer_t buff, generic quoi)
         }
         break;
 
-    case MUSIC_RETURN:
-        strcpy(msg->current_music, strtok(NULL, "|"));
-        break;
     case SEND_MUSIC_CHOICE:
-        strcpy(msg->current_music, strtok(NULL, "|"));
+        // pour un char : strcpy(msg->current_music, strtok(NULL, "|"));
+        msg->current_music = atoi(strtok(NULL, "|"));
         break;
     case SEND_MUSIC_REQUEST:
+        break;
+    case REQUEST_PLAYLIST:
         break;
     default:
         break;
@@ -70,6 +81,7 @@ void deserializeMusicMessage(buffer_t buff, generic quoi)
 
 void serializeMusicMessage(generic quoi, buffer_t buff){
     MusicMessage *msg = (MusicMessage *)quoi;
+    
     char time_str[MAX_BUFF];
 
     switch (msg->type)
@@ -90,16 +102,39 @@ void serializeMusicMessage(generic quoi, buffer_t buff){
         break;
     case MUSIC_RETURN:
         strcpy(buff, "MUSIC_RETURN|");
-        strcat(buff, msg->current_music);
+        sprintf(time_str, "%d", msg->current_music);
+        strcat(buff, time_str);
+        strcat(buff, "|");
+        sprintf(time_str, "%d", msg->playlist_size);
+        strcat(buff, time_str);
+        strcat(buff, "|");
+    
+        for (int i = 0; i < MAX_BUFF; i++) {
+            if (msg->playlist[i][0] == '\0') {
+                break;
+            }
+            strcat(buff, msg->playlist[i]);
+            strcat(buff, "/");
+        }
         break;
     case SEND_MUSIC_CHOICE:
         strcpy(buff, "SEND_MUSIC_CHOICE|");
-        strcat(buff, msg->current_music);
+        sprintf(time_str, "%d", msg->current_music);
+        strcat(buff, time_str);
         break;
     case SEND_MUSIC_REQUEST:
         strcpy(buff, "SEND_MUSIC_REQUEST|");
-        strcat(buff, msg->current_music);
+        sprintf(time_str, "%d", msg->current_music);
+        strcat(buff, time_str);
         break;
+    case REQUEST_PLAYLIST:
+        strcpy(buff, "REQUEST_PLAYLIST|");
+        printf("Request playlist\n");
+        break;
+    case OK:
+        strcpy(buff, "OK|");
+        break;
+
     default:
         break;
     }
