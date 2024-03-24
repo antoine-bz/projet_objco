@@ -1,11 +1,15 @@
 #include "protoServer.h"
 
 
-char *currentMusic;
+int *currentMusic;
 int *isPlaying;
 int  *isChoosing;
+int *musicPid;
+
 int shm_id, shm_size;
 void *shm_ptr;
+
+
 
 
 void server (char *addrIPsrv, short server_port){
@@ -16,7 +20,7 @@ void server (char *addrIPsrv, short server_port){
     CHECK(shm_id = shm_open("maZone", O_CREAT | O_RDWR, S_IRWXU), "shm_open error");
 
    // Calculate file size
-    shm_size = sizeof(int) + sizeof(char) * MAX_BUFF + sizeof(int) + sizeof(int);
+    shm_size = sizeof(char) * MAX_BUFF + 3*sizeof(int);
 
     // Set the size of the shared memory object
     CHECK(ftruncate(shm_id, shm_size) == 0, "ftruncate error");
@@ -27,15 +31,17 @@ void server (char *addrIPsrv, short server_port){
 
 
     // on initialise les variables
-    currentMusic = (char *)(shm_ptr + sizeof(int));
+    currentMusic = (int *)(shm_ptr + sizeof(int));
     isPlaying = (int *)(shm_ptr + sizeof(int) + sizeof(char) * MAX_BUFF);
     isChoosing = (int *)(shm_ptr + sizeof(int) + sizeof(char) * MAX_BUFF + sizeof(int));
+    musicPid = (int *)(shm_ptr + sizeof(int) + sizeof(char) * MAX_BUFF + sizeof(int));
 
 
     // on initialise les variables
-    strcpy(currentMusic, "");
+    *currentMusic = 0;
     *isPlaying = FALSE;
     *isChoosing = FALSE;
+    *musicPid = 0;
 
     signal(SIGINT, signalHandler);
 
@@ -62,7 +68,7 @@ void server (char *addrIPsrv, short server_port){
     } else
     if (pid == 0) {
         while (1) {
-            printf("currentMusic: %s\n", currentMusic);
+            printf("currentMusic: %d\n", *currentMusic);
             printf("isPlaying: %d\n", *isPlaying);
             printf("isChoosing: %d\n", *isChoosing);
             sleep(10);
@@ -130,9 +136,17 @@ void handle_client(socket_t *client_socket) {
 
             printf("Received choice %s from client\n\n", musicMessage.current_music);
             // on met la musique choisie par le client dans currentMusic
-            strcpy(currentMusic, musicMessage.current_music);
+            MusicMessage musicMessage2;
+            musicMessage2 = retrievePlaylist();
+            *currentMusic = findMusic(musicMessage2, musicMessage.current_music);
             envoyer(client_socket, "OK", NULL);
 
+            break;
+
+        case REQUEST_PLAYLIST:
+            printf("REQUEST_PLAYLIST received from client\n\n");
+            kill (*musicPid, SIGKILL);
+            sendPlaylist(client_socket);
             break;
 
         case QUIT:
@@ -156,11 +170,14 @@ void sendCurrentMusic(socket_t *client_socket) {
     int i=0;
     MusicMessage bufferMusic;
 
+    bufferMusic = retrievePlaylist();
+    strcpy(bufferMusic.current_music, bufferMusic.playlist[*currentMusic]);
+
     bufferMusic.type = MUSIC_RETURN;
-    strcpy(bufferMusic.current_music, currentMusic);
+    
     // on recupere le nom du fichier a telecharger et on ajoute le dossier dans lequel il se trouve devant
 
-    printf("Sending %s to client...\n\n", currentMusic);
+    printf("Sending %d to client...\n\n", *currentMusic);
 
     envoyer(client_socket, &bufferMusic, (pFct) serializeMusicMessage);
 
@@ -173,33 +190,10 @@ void sendCurrentMusic(socket_t *client_socket) {
 
 void sendPlaylist(socket_t *client_socket) {
     MusicMessage musicMessage;
-    DIR *dir;
-    struct 
-    dirent *entry;
-    int i = 0;
+    *isChoosing = TRUE;
 
-    // Open the directory
-    dir = opendir("playlist");
-    if (dir == NULL) {
-        perror("Unable to open directory");
-        return;
-    }
-
-    // Read the directory entries
-    if (dir)
-    while ((entry = readdir(dir)) != NULL) {
-            if (entry->d_type != DT_REG) {
-                continue;
-            }
-        // Ignore "." and ".." entries
-        if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
-            // Copy the entry name to the playlist
-            strncpy(musicMessage.playlist[i], entry->d_name, MAX_BUFF - 1);
-            musicMessage.playlist[i][MAX_BUFF - 1] = '\0'; // Ensure null-termination
-            i++;
-        }
-    }
-    closedir(dir);
+    // on recupere la playlist
+    musicMessage = retrievePlaylist();
 
     musicMessage.type = PLAYLIST_RETURN; // Assuming PLAYLIST_RETURN is defined elsewhere
     // You should set other fields of musicMessage as needed
@@ -207,35 +201,80 @@ void sendPlaylist(socket_t *client_socket) {
     printf("Sending playlist to client...\n");
     // Send musicMessage to the client
     envoyer(client_socket, &musicMessage, (pFct)serializeMusicMessage);
+
+    // on attend que le client ait choisi une musique
+    recevoir(client_socket, &musicMessage, (pFct)deserializeMusicMessage);
+
+    // on met la musique choisie par le client dans currentMusic
+    for (int i = 0; i < musicMessage.playlist_size; i++) {
+        if (strcmp(musicMessage.playlist[i], musicMessage.current_music) == 0) {
+            *currentMusic = i;
+            break;
+        }
+    }
+
+    *isChoosing = FALSE;
+
 }
 
 
 void myRadio(){
+    MusicMessage musicMessage; 
+    int i = 0;
+    pid_t musicPlayPid, buttonPid;
 
-    DIR *d;
-    struct dirent *dir;
-    d = opendir("playlist");
+    // on recupere la playlist
+    musicMessage = retrievePlaylist();
 
-    // on attend que le client ait choisi une musique
-    while (strlen(currentMusic) == 0);
 
-    if (d) {
-        while ((dir = readdir(d)) != NULL) {
-            if (dir->d_type != DT_REG) {
-                continue;
-            }
+    while (1) {
+        // on attend que le client ait choisi une musique
+        while (*isChoosing == TRUE);
+
+
+        // on lance la musique
+        musicPlayPid = fork();
+        if (musicPlayPid == -1) {
+            perror("Erreur lors de la création du processus fils");
+            exit(EXIT_FAILURE);
+        } else
+        if (musicPlayPid == 0) {
+            *musicPid = getpid();
+
+            *isPlaying = TRUE;
             // Construire le chemin complet du fichier
             char path[MAX_BUFF];
-            snprintf(path, sizeof(path), "playlist/%s", dir->d_name);
+            snprintf(path, sizeof(path)+9, "playlist/%s", musicMessage.playlist[i]);
+            printf("path: %s\n", path);
 
-            strcpy(currentMusic, dir->d_name);
-
-            streamAudioServer(path); // Jouer le fichier audio
+            //streamAudioServer(path); // Jouer le fichier audio
+            exit(EXIT_SUCCESS);
         }
-        closedir(d);
+
+        buttonPid = fork();
+        if (buttonPid == -1) {
+            perror("Erreur lors de la création du processus fils");
+            exit(EXIT_FAILURE);
+        } else
+        if (buttonPid == 0) {
+            buttonHandler(*musicPid);
+            exit(EXIT_SUCCESS);
+        }
+
+
+        waitpid(musicPlayPid, NULL, 0);
+
+        // on passe à la musique suivante
+        isPlaying = FALSE;
+        i++;
+        if (i == musicMessage.playlist_size) {
+            i = 0;
+        }
+
     }
+    
     // on remet currentMusic à vide
-    strcpy(currentMusic, "");
+    *currentMusic = 0;
     *isPlaying = FALSE;
     *isChoosing = FALSE;
 
@@ -275,14 +314,75 @@ int buttonHandler(pid_t pid)
         if (digitalRead(PIN_IN_GAUCHE) == LOW)
         {
             //  musique précédente
-            return kill(pid, SIGUSR2);
+            *isPlaying = FALSE;
+            kill(pid, SIGKILL);
+            *currentMusic = *currentMusic - 1;
+            if (*currentMusic < 0) {
+                *currentMusic = 0;
+            }
+
+            return  1; // a completer
         }
         if (digitalRead(PIN_IN_DROITE) == LOW)
         {
             //  musique suivante
-            return kill(pid, SIGUSR1);
+            *isPlaying = FALSE;
+            kill(pid, SIGKILL);
+            *currentMusic = *currentMusic + 1;
+            if (*currentMusic == 0) {
+                *currentMusic = 0;
+            }
+            return 2; // a completer
         }
-	}*/
-
+	}
+    */
 	return 0 ;
+}
+
+
+MusicMessage retrievePlaylist(){
+    MusicMessage musicMessage;
+    DIR *dir;
+    struct dirent *entry;
+    int i = 0;
+
+    // Open the directory
+    dir = opendir("playlist");
+    if (dir == NULL) {
+        perror("Unable to open directory");
+        return musicMessage;
+    }
+
+    // Read the directory entries
+    if (dir)
+    while ((entry = readdir(dir)) != NULL) {
+            if (entry->d_type != DT_REG) {
+                continue;
+            }
+        // Ignore "." and ".." entries
+        if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+            // Copy the entry name to the playlist
+            strncpy(musicMessage.playlist[i], entry->d_name, MAX_BUFF - 1);
+            musicMessage.playlist[i][MAX_BUFF - 1] = '\0'; // Ensure null-termination
+            i++;
+        }
+    }
+    closedir(dir);
+
+    musicMessage.type = PLAYLIST_RETURN; // Assuming PLAYLIST_RETURN is defined elsewhere
+    // You should set other fields of musicMessage as needed
+
+    return musicMessage;
+}
+
+int findMusic(MusicMessage musicMessage, char *musicName) {
+    if (musicMessage.playlist_size == 0) {
+        return -1;
+    }
+    for (int i = 0; i < musicMessage.playlist_size; i++) {
+        if (strcmp(musicMessage.playlist[i], musicName) == 0) {
+            return i;
+        }
+    }
+    return -1;
 }

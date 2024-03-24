@@ -69,9 +69,8 @@ typedef char buffer_t[MAX_BUFF];
 #define SEND_MUSIC_CHOICE     2
 #define SEND_MUSIC_REQUEST    3
 #define MUSIC_RETURN          4
-#define SEND_CURRENT_TIME_REQ 5
-#define CURRENT_TIME_RETURN   6
-#define QUIT                  7
+#define REQUEST_PLAYLIST      7
+#define QUIT                  8
 
 
 /**
@@ -79,14 +78,14 @@ typedef char buffer_t[MAX_BUFF];
  * \brief Structure pour les messages de musique
  * \param type Type de message
  * \param current_music Nom de la chanson courante
- * \param current_time Temps courant de la chanson en millisec
+ * \param playlist_size Taille de la playlist
  * \param playlist Nom de la chanson courante
  * \details Cette structure est utilisée pour les messages de musique entre le client et le serveur
 */
 typedef struct MusicMessage {
     int type; // type de message
     char current_music[MAX_BUFF]; // nom de la chanson courante
-    int current_time; // temps courant de la chanson en millisec
+    int playlist_size; // taille de la playlist
     char playlist[MAX_BUFF][MAX_BUFF]; // nom de la chanson courante
 } MusicMessage;
 

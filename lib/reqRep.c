@@ -15,17 +15,11 @@ void deserializeMusicMessage(buffer_t buff, generic quoi)
     else if (strcmp(type, "MUSIC_RETURN") == 0) {
         msg->type = MUSIC_RETURN;
     }
-    else if (strcmp(type, "CURRENT_TIME_RETURN") == 0) {
-        msg->type = CURRENT_TIME_RETURN;
-    }
     else if (strcmp(type, "SEND_MUSIC_CHOICE") == 0) {
         msg->type = SEND_MUSIC_CHOICE;
     }
     else if (strcmp(type, "SEND_MUSIC_REQUEST") == 0) {
         msg->type = SEND_MUSIC_REQUEST;
-    }
-    else if (strcmp(type, "SEND_CURRENT_TIME_REQ") == 0) {
-        msg->type = SEND_CURRENT_TIME_REQ;
     }
     else {
         printf("Erreur de type de message");
@@ -36,6 +30,8 @@ void deserializeMusicMessage(buffer_t buff, generic quoi)
     {
     case PLAYLIST_RETURN: 
         char *token = strtok(NULL, "|"); // Récupérer la partie de la chaîne après le délimiteur '|'
+        msg->playlist_size = atoi(token); // Convertir la taille de la playlist en entier
+        token = strtok(NULL, "|"); // Récupérer la partie de la chaîne après le délimiteur '|'
         if (token != NULL) {
             char music[MAX_BUFF]; // Stocker temporairement chaque nom de musique
             int index = 0;
@@ -62,16 +58,10 @@ void deserializeMusicMessage(buffer_t buff, generic quoi)
     case MUSIC_RETURN:
         strcpy(msg->current_music, strtok(NULL, "|"));
         break;
-    case CURRENT_TIME_RETURN:
-        msg->current_time = atoi(strtok(NULL, "|"));
-        break;
     case SEND_MUSIC_CHOICE:
         strcpy(msg->current_music, strtok(NULL, "|"));
         break;
     case SEND_MUSIC_REQUEST:
-        break;
-    case SEND_CURRENT_TIME_REQ:
-        strcpy(msg->current_music, strtok(NULL, "|"));
         break;
     default:
         break;
@@ -86,6 +76,10 @@ void serializeMusicMessage(generic quoi, buffer_t buff){
     {
     case PLAYLIST_RETURN:
         strcpy(buff, "PLAYLIST_RETURN|");
+        sprintf(time_str, "%d", msg->playlist_size);
+        strcat(buff, time_str);
+        strcat(buff, "|");
+    
         for (int i = 0; i < MAX_BUFF; i++) {
             if (msg->playlist[i][0] == '\0') {
                 break;
@@ -98,11 +92,6 @@ void serializeMusicMessage(generic quoi, buffer_t buff){
         strcpy(buff, "MUSIC_RETURN|");
         strcat(buff, msg->current_music);
         break;
-    case CURRENT_TIME_RETURN:
-        strcpy(buff, "CURRENT_TIME_RETURN|");
-        sprintf(time_str, "%d", msg->current_time);
-        strcat(buff, time_str);
-        break;
     case SEND_MUSIC_CHOICE:
         strcpy(buff, "SEND_MUSIC_CHOICE|");
         strcat(buff, msg->current_music);
@@ -110,11 +99,6 @@ void serializeMusicMessage(generic quoi, buffer_t buff){
     case SEND_MUSIC_REQUEST:
         strcpy(buff, "SEND_MUSIC_REQUEST|");
         strcat(buff, msg->current_music);
-        break;
-    case SEND_CURRENT_TIME_REQ:
-        strcpy(buff, "SEND_CURRENT_TIME_REQ|");
-        sprintf(time_str, "%d", msg->current_time);
-        strcat(buff, time_str);
         break;
     default:
         break;

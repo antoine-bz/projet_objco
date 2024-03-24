@@ -36,10 +36,11 @@
  * \brief
  * \details Ces variables sont utilisées pour la communication entre le serveur et son processus fils
 */
-extern int *elapsedTime;
-extern char *currentMusic;
+
+extern int *currentMusic;
 extern int *isPlaying;
 extern int *isChoosing;
+extern int *musicPid;
 extern int shm_id;
 extern int shm_size;
 extern void *shm_ptr;
@@ -106,3 +107,11 @@ int buttonHandler(pid_t pid);
  * \return void
 */
 void sendCurrentMusic(socket_t *client_socket) ;
+
+
+
+
+MusicMessage retrievePlaylist();
+
+int findMusic(MusicMessage musicMessage, char *musicName);
+

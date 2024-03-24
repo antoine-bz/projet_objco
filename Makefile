@@ -1,9 +1,9 @@
 serveur: libServer.a 
-	gcc  main.c -DSERVEUR -o serveur -lServer -L./ -lvlc
+	gcc  main.c -DSERVEUR -o serveur.exe -lServer -L./ -lvlc
 	rm -f *.a
 
 client: libClient.a
-	gcc main.c -I. -L. -L/usr/lib/x86_64-linux-gnu/ -o client -DCLIENT -lClient -lvlc -lao -lm -L./
+	gcc main.c -I. -L. -L/usr/lib/x86_64-linux-gnu/ -o client.exe -DCLIENT -lClient -lvlc -lao -lm -L./
 	rm -f *.a
 
 libServer.a : ./lib/session.o ./lib/data.o ./lib/reqRep.o ./lib/audioStream.o protoServer.o
