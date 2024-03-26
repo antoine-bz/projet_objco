@@ -55,6 +55,6 @@ int main(){/*
 
     // test de audiostream
 
-    streamAudioClient("10.42.0.19")
+    streamAudioClient("10.42.0.19");
 
 }

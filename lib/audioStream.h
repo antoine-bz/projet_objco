@@ -31,4 +31,4 @@ void streamAudioServer(char *path);
  * @param ip IP address of the server
  * @return void
 */
-void streamAudioClient(char *ip)
+void streamAudioClient(char *ip);
