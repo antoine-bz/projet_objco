@@ -29,7 +29,6 @@ void streamAudioServer(char *path);
 /**
  * @brief Stream audio client
  * @param ip IP address of the server
- * @param port Port of the server
  * @return void
 */
-void streamAudioClient(char *ip, int port);
+void streamAudioClient(char *ip)

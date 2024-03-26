@@ -35,7 +35,7 @@ void streamAudioServer(char *file_path){
 
 }
 
-void streamAudioClient(char *ip, int port){
+void streamAudioClient(char *ip){
     // Initialisation de VLC
     libvlc_instance_t *vlc_inst;
     libvlc_media_player_t *media_player;
@@ -48,7 +48,7 @@ void streamAudioClient(char *ip, int port){
     media_player = libvlc_media_player_new(vlc_inst);
 
     // Création de l'URL du flux
-    snprintf(stream_url, 100, "http://%s:%d", ip, port);
+    snprintf(stream_url, 100, "http://%s:8080", ip);
 
     // Lecture du flux
     libvlc_media_player_set_media(media_player, libvlc_media_new_location(vlc_inst, stream_url));
