@@ -21,8 +21,8 @@ void deserializeMusicMessage(buffer_t buff, generic quoi)
     else if (strcmp(type, "SEND_MUSIC_REQUEST") == 0) {
         msg->type = SEND_MUSIC_REQUEST;
     }
-    else if (strcmp(type, "REQUEST_PLAYLIST") == 0) {
-        msg->type = REQUEST_PLAYLIST;
+    else if (strcmp(type, "PLAYLIST_REQUEST") == 0) {
+        msg->type = PLAYLIST_REQUEST;
     }
     else if (strcmp(type, "OK") == 0) {
         msg->type = OK;
@@ -72,7 +72,7 @@ void deserializeMusicMessage(buffer_t buff, generic quoi)
         break;
     case SEND_MUSIC_REQUEST:
         break;
-    case REQUEST_PLAYLIST:
+    case PLAYLIST_REQUEST:
         break;
     default:
         break;
@@ -127,8 +127,8 @@ void serializeMusicMessage(generic quoi, buffer_t buff){
         sprintf(time_str, "%d", msg->current_music);
         strcat(buff, time_str);
         break;
-    case REQUEST_PLAYLIST:
-        strcpy(buff, "REQUEST_PLAYLIST|");
+    case PLAYLIST_REQUEST:
+        strcpy(buff, "PLAYLIST_REQUEST|");
         printf("Request playlist\n");
         break;
     case OK:

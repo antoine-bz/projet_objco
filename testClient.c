@@ -1,10 +1,11 @@
-#include "./lib/reqRep.h"
+
 #include "./lib/audioStream.h"
 
 #define PORT_SVC 5000
 #define INADDR_SVC "127.0.0.1"
 
-int main(){/*
+int main(){
+    /*
     char reponse[MAX_BUFF];
     char envoie[MAX_BUFF];
     char addrIPsrv[MAX_BUFF];
@@ -55,6 +56,6 @@ int main(){/*
 
     // test de audiostream
 
-    streamAudioClient("10.42.0.19");
+    streamAudioClient("10.42.0.247");
 
 }

@@ -146,8 +146,8 @@ void handle_client(socket_t *client_socket) {
 
             break;
 
-        case REQUEST_PLAYLIST:
-            printf("REQUEST_PLAYLIST received from client\n\n");
+        case PLAYLIST_REQUEST:
+            printf("PLAYLIST_REQUEST received from client\n\n");
             kill (*musicPid, SIGKILL);
             *isPlaying = FALSE;
             *currentMusic = UNDEFINED;
