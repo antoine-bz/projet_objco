@@ -1,3 +1,4 @@
+/*
 #include "protoClient.h"
 socket_t sockDial;  
 int *mute;
