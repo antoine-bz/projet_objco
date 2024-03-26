@@ -12,9 +12,7 @@ void client(char *addrIPsrv, short port) {
     int choix, tailleTableau;
 
     
-    signal(SIGINT, signalHandler);
 
-    // on cree la memoire 
     CHECK(shm_id = shm_open("maZoneClient", O_CREAT | O_RDWR, S_IRWXU), "shm_open error");
 
     // Calculate file size
@@ -52,7 +50,7 @@ void client(char *addrIPsrv, short port) {
         scanf("%d", &choix);
         strcpy( buffer.current_music,buffer.playlist[choix]);
         buffer.type = SEND_MUSIC_CHOICE;
-        buffer.current_time = 0;
+        //buffer.current_time = 0;
         
         envoyer(&sockDial, &buffer, (pFct) serializeMusicMessage);
         recevoir(&sockDial, &reponse, NULL);
@@ -63,7 +61,7 @@ void client(char *addrIPsrv, short port) {
         }
         
         buffer.type = SEND_MUSIC_REQUEST ;
-        buffer.current_time = 0;
+      //  buffer.current_time = 0;
         buffer.current_music[0] = '\0';
         envoyer(&sockDial, &buffer, (pFct) serializeMusicMessage);
         recevoir(&sockDial, &buffer, (pFct) deserializeMusicMessage);
@@ -84,14 +82,14 @@ void client(char *addrIPsrv, short port) {
 
         strcpy(musicName, "current_");
         strcat(musicName, buffer.current_music);
-        buffer.type = SEND_CURRENT_TIME_REQ ;
+        //buffer.type = SEND_CURRENT_TIME_REQ ;
         envoyer(&sockDial, &buffer, (pFct) serializeMusicMessage);
         recevoir(&sockDial, &buffer, (pFct) deserializeMusicMessage);
 
 
 
 
-        lancerMusique(musicName, buffer.current_time);
+        //lancerMusique(musicName, buffer.current_time);
 
         sleep(6);
         buffer.type = SEND_MUSIC_REQUEST ;
@@ -168,6 +166,5 @@ static void signalHandler(int sig) {
 
 void lancerMusique(char *file_name, int tempsEcoule) {
 }
-
 
 */
