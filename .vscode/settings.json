@@ -4,6 +4,7 @@
         "unistd.h": "c",
         "system_error": "c",
         "sstream": "c",
-        "regex": "c"
+        "regex": "c",
+        "chrono": "c"
     }
 }

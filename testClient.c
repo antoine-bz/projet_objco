@@ -7,7 +7,7 @@
 int main(){
 
     // test de audiostream
-    // streamAudioClient("127.0.0.1");
+    streamAudioClient("127.0.0.1");
     
     
     char reponse[MAX_BUFF];

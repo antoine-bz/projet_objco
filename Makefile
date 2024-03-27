@@ -3,7 +3,7 @@ serveur: libServer.a
 	rm -f *.a
 
 client: libClient.a
-	gcc main.c -I. -L. -L/usr/lib/x86_64-linux-gnu/ -o client.exe -DCLIENT -lClient -lvlc -lao -lm -L./
+	gcc main.c -o client.exe -DCLIENT -lClient -L./ -lvlc 
 	rm -f *.a
 
 libServer.a : ./lib/session.o ./lib/data.o ./lib/reqRep.o ./lib/audioStream.o protoServer.o

@@ -38,9 +38,9 @@ void streamAudioServer(char *file_path) {
     // Joue le média
     libvlc_media_player_play(mp);
 
-    // Garde le programme en cours d'exécution
-    printf("Streaming. Press enter to exit...\n");
-    getchar();
+    sleep(1);
+    // Attendre la fin de la lecture
+    while(libvlc_media_player_is_playing(mp));
 
     // Nettoyage
     libvlc_media_player_stop(mp);
@@ -82,9 +82,11 @@ void streamAudioClient(char *ip) {
         libvlc_release(vlcInstance);
         return;
     }
-    
-    printf("Streaming from %s. Press Enter to stop.\n", url);
-    getchar(); // Attend que l'utilisateur appuie sur Entrée
+
+    sleep(1);
+    printf("Playing\n");
+    // Attendre la fin de la lecture
+    while(libvlc_media_player_is_playing(mp));
     
     // Nettoyage
     libvlc_media_player_stop(mp);
