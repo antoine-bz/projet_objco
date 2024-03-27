@@ -227,10 +227,8 @@ void sendPlaylist(socket_t *client_socket) {
 void myRadio(){
     MusicMessage musicMessage; 
     pid_t musicPlayPid, buttonPid;
-    int i = 0;
     
     while(*currentMusic == UNDEFINED);
-    i = *currentMusic;
 
     // on recupere la playlist
     musicMessage = retrievePlaylist();
@@ -240,7 +238,7 @@ void myRadio(){
         
         // on attend que le client ait choisi une musique
         while (*isChoosing == TRUE){
-            usleep(1000);
+            sleep(1);
         }
 
 
@@ -256,14 +254,16 @@ void myRadio(){
 
             // Construire le chemin complet du fichier
             char path[MAX_BUFF];
-            snprintf(path, sizeof(path)+9, "playlist/%s", musicMessage.playlist[i]);
+
+            printf("currentMusic: %d\n", *currentMusic);
+            snprintf(path, sizeof(path)+9, "playlist/%s", musicMessage.playlist[*currentMusic]);
             printf("path: %s\n", path);
 
-            sleep(10);
+            streamAudioServer(path); // Jouer le fichier audio
             //streamAudioServer(path); // Jouer le fichier audio
             exit(EXIT_SUCCESS);
         }
-
+        
         buttonPid = fork();
         if (buttonPid == -1) {
             perror("Erreur lors de la création du processus fils");
@@ -273,22 +273,24 @@ void myRadio(){
             buttonHandler(*musicPid);
             exit(EXIT_SUCCESS);
         }
-
-
-        waitpid(musicPlayPid, NULL, 0);
-        kill(buttonPid, SIGKILL);
         
 
+        waitpid(musicPlayPid, NULL, 0);
+        
+        sleep(1);
+
         // on passe à la musique suivante
-        isPlaying = FALSE;
+        *isPlaying = FALSE;
         printf("Playing next music...\n");
-
-        i++;  
-        if (i == musicMessage.playlist_size) {
-            i = 0;
+        kill(buttonPid, SIGKILL);
+  
+        
+        *currentMusic=*currentMusic+1;
+        
+        if (*currentMusic == musicMessage.playlist_size+1) {
+            *currentMusic = 0;
         }
-
-        *currentMusic = i;
+               
 
     }
     
@@ -335,7 +337,7 @@ int buttonHandler(pid_t pid)
             //  musique précédente
             *isPlaying = FALSE;
             kill(pid, SIGKILL);
-            *currentMusic = *currentMusic - 1;
+            *currentMusic = *currentMusic - 2;
             if (*currentMusic < 0) {
                 *currentMusic = 0;
             }
@@ -347,7 +349,7 @@ int buttonHandler(pid_t pid)
             //  musique suivante
             *isPlaying = FALSE;
             kill(pid, SIGKILL);
-            *currentMusic = *currentMusic + 1;
+            *currentMusic = *currentMusic ;
             if (*currentMusic == 0) {
                 *currentMusic = 0;
             }

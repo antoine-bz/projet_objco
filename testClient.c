@@ -5,16 +5,10 @@
 #define INADDR_SVC "127.0.0.1"
 
 int main(){
-
-    // test de audiostream
-    streamAudioClient("127.0.0.1");
-    
-    
     char reponse[MAX_BUFF];
     char envoie[MAX_BUFF];
     char addrIPsrv[MAX_BUFF];
     short port;
-    pid_t pid;
 
     socket_t sockDial;
     socket_t sockEcoute;
