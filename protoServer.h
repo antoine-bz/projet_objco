@@ -5,7 +5,7 @@
 */
 
 #include "./lib/reqRep.h"
-#include "./lib/audioStream.h"
+#include "./lib/objCoLib.h"
 
 #include <stdio.h>
 #include <dirent.h>

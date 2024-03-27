@@ -226,7 +226,9 @@ void sendPlaylist(socket_t *client_socket) {
 
 void myRadio(){
     MusicMessage musicMessage; 
-    pid_t musicPlayPid, buttonPid;
+    pid_t musicPlayPid, buttonPid, segmentPid;
+    int fd = init_7segment();
+    int lcd = initLCD();
     
     while(*currentMusic == UNDEFINED);
 
@@ -259,8 +261,10 @@ void myRadio(){
             snprintf(path, sizeof(path)+9, "playlist/%s", musicMessage.playlist[*currentMusic]);
             printf("path: %s\n", path);
 
+            // on affiche le nom de la musique sur l'ecran LCD
+            writeLCD(lcd,0,0, musicMessage.playlist[*currentMusic]);
+
             streamAudioServer(path); // Jouer le fichier audio
-            //streamAudioServer(path); // Jouer le fichier audio
             exit(EXIT_SUCCESS);
         }
         
@@ -273,6 +277,22 @@ void myRadio(){
             buttonHandler(*musicPid);
             exit(EXIT_SUCCESS);
         }
+
+        segmentPid = fork();
+        if (segmentPid == -1) {
+            perror("Erreur lors de la création du processus fils");
+            exit(EXIT_FAILURE);
+        } else
+        if (segmentPid == 0) {
+            int sec = 0;
+            // on affiche le temps de la musique
+            while (*isPlaying == TRUE) {
+                afficher_7segment_sec(fd, sec);
+                sleep(1);
+                sec++;
+            }
+            exit(EXIT_SUCCESS);
+        }
         
 
         waitpid(musicPlayPid, NULL, 0);
@@ -283,6 +303,7 @@ void myRadio(){
         *isPlaying = FALSE;
         printf("Playing next music...\n");
         kill(buttonPid, SIGKILL);
+        kill(segmentPid, SIGKILL);
   
         
         *currentMusic=*currentMusic+1;
@@ -323,7 +344,8 @@ static void signalHandler(int sig) {
 
 int buttonHandler(pid_t pid)
 {
-	/*
+	#ifdef JOYPI
+
 	wiringPiSetup () ;
 	pinMode (PIN_IN_GAUCHE, INPUT) ;
     pinMode (PIN_IN_DROITE, INPUT) ;
@@ -356,7 +378,8 @@ int buttonHandler(pid_t pid)
             return 2; // a completer
         }
 	}
-    */
+
+    #endif
 	return 0 ;
 }
 

@@ -30,7 +30,7 @@ int initLCD(){
     mcp23008Setup(PIN_BASE, I2C_ADDRESS_LCD); // 100 is the base pin number, 0x20 is the I2C address of the MCP23008
     pinMode(PIN_BASE, OUTPUT); // Set the MCP23008 pin 0 as an output
 
-    lcdHandle = lcdInit(2, 16, 4, PIN_BASE+RS,PIN_BASE+E ,PIN_BASE+DB4,PIN_BASE+DB5,PIN_BASE+DB6,PIN_BASE+DB7,0,0,0,0); 
+    if (lcdHandle = lcdInit(2, 16, 4, PIN_BASE+RS,PIN_BASE+E ,PIN_BASE+DB4,PIN_BASE+DB5,PIN_BASE+DB6,PIN_BASE+DB7,0,0,0,0) < 0){
         printf("lcdInit failed!\n");
         return -1;
     }

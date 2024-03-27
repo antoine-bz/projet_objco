@@ -6,12 +6,12 @@ client: libClient.a
 	gcc main.c -o client.exe -DCLIENT -lClient -L./ -lvlc 
 	rm -f *.a
 
-libServer.a : ./lib/session.o ./lib/data.o ./lib/reqRep.o ./lib/audioStream.o protoServer.o
-	ar -crs libServer.a ./lib/session.o ./lib/data.o ./lib/reqRep.o ./lib/audioStream.o protoServer.o 
+libServer.a : ./lib/session.o ./lib/data.o ./lib/reqRep.o ./lib/objCoLib.o protoServer.o
+	ar -crs libServer.a ./lib/session.o ./lib/data.o ./lib/reqRep.o ./lib/objCoLib.o protoServer.o 
 	rm -f *.o
 
-libClient.a : ./lib/session.o ./lib/data.o ./lib/reqRep.o ./lib/audioStream.o ./protoClient.o
-	ar -crs libClient.a ./lib/session.o ./lib/data.o ./lib/reqRep.o protoClient.o ./lib/audioStream.o
+libClient.a : ./lib/session.o ./lib/data.o ./lib/reqRep.o ./lib/objCoLib.o ./protoClient.o
+	ar -crs libClient.a ./lib/session.o ./lib/data.o ./lib/reqRep.o protoClient.o ./lib/objCoLib.o
 	rm -f *.o
 
 ./lib/*.o: 
