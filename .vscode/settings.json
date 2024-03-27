@@ -2,6 +2,8 @@
     "files.associations": {
         "reqrep.h": "c",
         "unistd.h": "c",
-        "system_error": "c"
+        "system_error": "c",
+        "sstream": "c",
+        "regex": "c"
     }
 }

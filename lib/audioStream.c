@@ -1,12 +1,24 @@
 #include "audioStream.h"
 
+// log 
+void log_callback(void *data, int level, const libvlc_log_t *ctx, const char *fmt, va_list args) {
+    char *str = malloc(1024);
+    vsnprintf(str, 1024, fmt, args);
+    printf("libVLC: %s\n", str);
+    free(str);
+}
+
+
 void streamAudioServer(char *file_path) {
     libvlc_instance_t *inst;
     libvlc_media_t *m;
     libvlc_media_player_t *mp;
-
+  
     // Crée une nouvelle instance libVLC
     inst = libvlc_new(0, NULL);
+
+    // Enregistre le callback de log
+    //libvlc_log_set(inst, log_callback, NULL);    
 
     // Crée un nouvel objet média
     m = libvlc_media_new_path(inst, file_path);

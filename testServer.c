@@ -5,6 +5,6 @@
 #define INADDR_SVC "127.0.0.1"
 
 int main(){
-    streamAudioServer("./playlist/Radiohead_Creep.mp3");
-
+    
+    streamAudioServer("./playlist/Gusttavo_Lima_Balada.mp3");
 }

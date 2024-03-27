@@ -5,7 +5,7 @@
 #define INADDR_SVC "127.0.0.1"
 
 int main(){
-    /*
+    
     char reponse[MAX_BUFF];
     char envoie[MAX_BUFF];
     char addrIPsrv[MAX_BUFF];
@@ -52,10 +52,10 @@ int main(){
         envoyer(&sockDial, &message, (pFct) serializeMusicMessage);
         recevoir(&sockDial, &message, (pFct) deserializeMusicMessage);
     
-   }*/
+   }
 
     // test de audiostream
 
-    streamAudioClient("10.42.0.247");
+    //streamAudioClient("127.0.0.1");
 
 }

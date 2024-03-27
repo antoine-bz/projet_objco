@@ -32,3 +32,15 @@ void streamAudioServer(char *path);
  * @return void
 */
 void streamAudioClient(char *ip);
+
+/**
+ * @brief Log callback
+ * @param data Data
+ * @param level Level
+ * @param ctx Context
+ * @param fmt Format
+ * @param args Arguments
+ * @return void
+ * @note This function is used to log the VLC messages
+*/
+void log_callback(void *data, int level, const libvlc_log_t *ctx, const char *fmt, va_list args)
