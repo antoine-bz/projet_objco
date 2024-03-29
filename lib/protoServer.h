@@ -4,8 +4,8 @@
  * \version 0.1
 */
 
-#include "./lib/reqRep.h"
-#include "./lib/objCoLib.h"
+#include "reqRep.h"
+#include "objCoLib.h"
 
 #include <stdio.h>
 #include <dirent.h>

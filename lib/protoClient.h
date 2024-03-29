@@ -5,7 +5,7 @@
 */
 
 
-#include "./lib/reqRep.h"
+#include "reqRep.h"
 
 /**
  * \def BITS

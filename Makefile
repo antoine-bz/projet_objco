@@ -36,3 +36,23 @@ clean:
 	rm -f *.exe
 	rm -f *.a
 	cd lib && make clean
+
+
+#MAKEFILE FOR LIB RPI meme version qu'au dessus mais CCC
+
+PATH_PWD=$(CURDIR)
+PATH_CC=$(PATH_PWD)/tools-master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin
+CCC=$(PATH_CC)/arm-linux-gnueabihf-gcc
+
+
+serveurCCC: ./lib/libServerCCC.a 
+	$(CCC)  main.c -DSERVEUR -o serveurCCC.exe -lServerCCC -L./lib -lvlc
+	rm -f *.a
+
+clientCCC: ./lib/libClientCCC.a
+	$(CCC) main.c -o clientCCC.exe -DCLIENT -lClientCCC -L./lib -lvlc 
+	rm -f *.a
+
+
+./lib/*.a:
+	cd lib && make CCC
