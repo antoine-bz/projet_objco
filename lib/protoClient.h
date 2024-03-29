@@ -6,12 +6,17 @@
 
 
 #include "reqRep.h"
+#include <sys/types.h>
+#include <vlc/vlc.h>
 
 /**
  * \def BITS
  * \brief Définition du nombre de bits pour le son
 */
 #define BITS 8
+
+
+#define DISCONNECT_CHOICE 0
 
 /**
  * \fn void client (char *addrIPsrv, short port)
@@ -65,3 +70,11 @@ static void signalHandler(int sig);
  * \brief Socket pour la communication avec le serveur
 */
 extern socket_t sockDial;
+
+/**
+ * \fn void waitForMusicToEnd()
+ * \brief Fonction qui attend la fin de la musique
+ * \return void
+ * \details Cette fonction attend la fin de la musique
+*/
+void waitForMusicToEnd(libvlc_instance_t *vlcInstance, libvlc_media_player_t *mp);

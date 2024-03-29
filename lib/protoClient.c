@@ -1,20 +1,22 @@
-/*
 #include "protoClient.h"
+
 socket_t sockDial;  
 int *mute;
 int shm_id, shm_size;
+libvlc_instance_t *vlcInstance;
+libvlc_media_player_t *mp;
+
 
 
 void client(char *addrIPsrv, short port) {
     char reponse[MAX_BUFF];
     char musicName[MAX_BUFF];
-    MusicMessage buffer;
+    MusicMessage buffer = {0}; // Initialize buffer to zero
     int choix, tailleTableau;
-
-    
-
+    int client_connected = 1; // Variable to control the loop, based on client connection status.
+    char current_music_str[10];
+    sprintf(current_music_str, "%d", buffer.current_music);
     CHECK(shm_id = shm_open("maZoneClient", O_CREAT | O_RDWR, S_IRWXU), "shm_open error");
-
     // Calculate file size
     shm_size = sizeof(int);
 
@@ -22,115 +24,78 @@ void client(char *addrIPsrv, short port) {
     CHECK(ftruncate(shm_id, shm_size) == 0, "ftruncate error");
 
     // Map the shared memory
-    // on initialise les variables
     mute = (int *) mmap(0, shm_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_id, 0);
     CHECK_MAP(mute, "mmap error");
-    
+
     // Demande d’une connexion au service
     sockDial.mode = SOCK_STREAM;
     sockDial.sock = connecter(addrIPsrv, port);
     sockDial.type = SOCK_CLIENT;
     ouvrirSocket(&sockDial, SOCK_STREAM, addrIPsrv, port);
 
-    buffer.type = SEND_MUSIC_REQUEST ;
-
-    envoyer(&sockDial, &buffer, (pFct) serializeMusicMessage);
-    recevoir(&sockDial, &buffer, (pFct) deserializeMusicMessage);
-    // Gestion de la musique courante
-    if (buffer.type == PLAYLIST_RETURN) {
-        printf("\nPlaylist:\n");
-        tailleTableau = sizeof(buffer.playlist) / sizeof(buffer.playlist[0]);
-        //strlen(buffer.playlist) a voir si ca marche
-        for (int i = 0; i < tailleTableau; i++)
-        {
-            if (strlen(buffer.playlist[i]) > 3)
-                printf("%d - %s\n", i, buffer.playlist[i]);
-        }
-        printf("\nChoisir une musique:\n");
-        scanf("%d", &choix);
-        strcpy( buffer.current_music,buffer.playlist[choix]);
-        buffer.type = SEND_MUSIC_CHOICE;
-        //buffer.current_time = 0;
-        
+    while(client_connected) {
+        buffer.type = SEND_MUSIC_REQUEST;
         envoyer(&sockDial, &buffer, (pFct) serializeMusicMessage);
-        recevoir(&sockDial, &reponse, NULL);
+        recevoir(&sockDial, &buffer, (pFct) deserializeMusicMessage);
 
-        if (strcmp(reponse, "OK") != 0) {
-            printf("Erreur de reception du choix\n");
+        if (buffer.type == PLAYLIST_RETURN) {
+            printf("\nPlaylist:\n");
+            tailleTableau = sizeof(buffer.playlist) / sizeof(buffer.playlist[0]);
+            for (int i = 0; i < tailleTableau; i++) {
+                if (strlen(buffer.playlist[i]) > 0) {
+                    printf("%d - %s\n", i, buffer.playlist[i]);
+                }
+            }
+            printf("\nChoisir une musique (%d pour quitter):\n", DISCONNECT_CHOICE);
+            scanf("%d", &choix);
+
+            if (choix == DISCONNECT_CHOICE) {
+                client_connected = 0;
+                break;
+            }
+
+            buffer.current_music =choix;
+            buffer.type = SEND_MUSIC_CHOICE;
+
+            envoyer(&sockDial, &buffer, (pFct) serializeMusicMessage);
+            recevoir(&sockDial, &reponse, NULL);
+
+            if (strcmp(reponse, "OK") != 0) {
+                printf("Erreur de reception du choix\n");
+                exit(EXIT_FAILURE);
+            }
+
+            if (buffer.type == MUSIC_RETURN) {
+                strcpy(musicName, "current_");
+                //strcat(musicName, buffer.current_music);
+                strcat(musicName, current_music_str);
+            streamAudioClient(addrIPsrv); // Use the IP to stream audio
+            } else {
+                printf("Erreur de reception de la musique\n");
+                exit(EXIT_FAILURE);
+            }
+
+            strcpy(musicName, "current_");
+            //strcat(musicName, buffer.current_music);
+            strcat(musicName, current_music_str);
+            streamAudioClient(addrIPsrv);
+            vlcInstance = libvlc_new(0, NULL);
+            mp = libvlc_media_player_new(vlcInstance);
+
+            waitForMusicToEnd(vlcInstance, mp);
+
+            printf("Voulez-vous choisir une autre musique (1 pour oui, %d pour non) ?\n", DISCONNECT_CHOICE);
+            scanf("%d", &choix);
+            if (choix == DISCONNECT_CHOICE) {
+                client_connected = 0; // User chose to not continue
+            }
+        } else {
+            printf("Erreur de reception de la playlist\n");
             exit(EXIT_FAILURE);
         }
-        
-        buffer.type = SEND_MUSIC_REQUEST ;
-      //  buffer.current_time = 0;
-        buffer.current_music[0] = '\0';
-        envoyer(&sockDial, &buffer, (pFct) serializeMusicMessage);
-        recevoir(&sockDial, &buffer, (pFct) deserializeMusicMessage);
     }
 
-    if(buffer.type == MUSIC_RETURN){
-        
-        recevoirMusique(&sockDial, buffer.current_music);
-    }
-    else{
-        printf("Erreur de reception de la musique\n");
-        exit(EXIT_FAILURE);
-    }
-
-   
-    while (1)
-    {
-
-        strcpy(musicName, "current_");
-        strcat(musicName, buffer.current_music);
-        //buffer.type = SEND_CURRENT_TIME_REQ ;
-        envoyer(&sockDial, &buffer, (pFct) serializeMusicMessage);
-        recevoir(&sockDial, &buffer, (pFct) deserializeMusicMessage);
-
-
-
-
-        //lancerMusique(musicName, buffer.current_time);
-
-        sleep(6);
-        buffer.type = SEND_MUSIC_REQUEST ;
-        envoyer(&sockDial, &buffer, (pFct) serializeMusicMessage);
-        recevoir(&sockDial, &buffer, (pFct) deserializeMusicMessage);
-    }
-    // Fermeture de la connexion
-    fermerSocket(&sockDial);
-}
-
-
-
-
-void recevoirMusique(socket_t *client_socket, char * nomMusique){
-    char buffer[MAX_BUFF];
-    char new_file_name [MAX_BUFF];
-    
-
-    printf("Reception de la musique\n");
-    envoyer(client_socket, "OK", NULL);
-
-    strcpy(new_file_name, "current_");
-    strcat(new_file_name, nomMusique);
-
-    // supprimer les anciens fichiers
-    system("rm -f current_*.mp3");   
-
-    // Recevoir et sauvegarder le fichier MP3
-    remove(new_file_name);
-    do {
-        // recevoir le contenu du fichier mp3
-        recevoir(client_socket, buffer, NULL);
-        // ecrire dans le fichier octet par octet
-        FILE *file = fopen(new_file_name, "ab");
-        CHECK_FILE(file, "fopen");
-        if (strcmp(buffer, EXIT) != 0) {
-            // ecrire dans le fichier octet par octet
-            fwrite(buffer, 1, MAX_BUFF, file);
-        }
-        fclose(file);
-    } while (strcmp(buffer, EXIT) != 0);
+    closeSocket(&sockDial); // Implement this function as needed
 }
 
 static void signalHandler(int sig) {
@@ -164,7 +129,15 @@ static void signalHandler(int sig) {
     }
 }
 
-void lancerMusique(char *file_name, int tempsEcoule) {
+void waitForMusicToEnd(libvlc_instance_t *vlcInstance, libvlc_media_player_t *mp) {
+    const int pollIntervalMs = 100;
+    while (libvlc_media_player_is_playing(mp)) {
+        usleep(pollIntervalMs * 1000); // Convert milliseconds to microseconds
+    }
+    printf("Playback finished\n");
+    // Cleanup should be handled here as well
+    libvlc_media_player_stop(mp);
+    libvlc_media_player_release(mp);
+    libvlc_release(vlcInstance);
 }
 
-*/
