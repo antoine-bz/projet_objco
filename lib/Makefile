@@ -5,25 +5,31 @@ else
     CC=gcc
 endif
 
-all: libServer.a libClient.a
+ifdef CFLAGS
+	CFLAGS=$(CFLAGS)
+else
+	CFLAGS=
+endif
+
+
 
 objCoLib.o: objCoLib.c objCoLib.h
-	$(CC) -c objCoLib.c -lvlc
+	$(CC) -c objCoLib.c -lvlc $(CFLAGS)
 
 reqRep.o: reqRep.c reqRep.h
-	$(CC) -c reqRep.c
+	$(CC) -c reqRep.c $(CFLAGS)
 
 session.o: session.c session.h
-	$(CC) -c session.c
+	$(CC) -c session.c $(CFLAGS)
 
 data.o: data.c data.h
-	$(CC) -c data.c
+	$(CC) -c data.c $(CFLAGS)
 
 protoClient.o: protoClient.c protoClient.h
-	$(CC) -c protoClient.c
+	$(CC) -c protoClient.c $(CFLAGS)
 
 protoServer.o: protoServer.c protoServer.h
-	$(CC) -c protoServer.c
+	$(CC) -c protoServer.c $(CFLAGS)
 
 
 libServer.a : session.o data.o reqRep.o objCoLib.o protoServer.o

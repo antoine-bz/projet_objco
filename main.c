@@ -6,17 +6,16 @@
 
 #ifdef CLIENT
     
-#include "protoClient.h"
+#include "./lib/protoClient.h"
 
 #endif
 #ifdef SERVEUR
 
-#include "protoServer.h"
+#include "./lib/protoServer.h"
 
 #endif
 
-
-
+// Définition des constantes
 #define PORT_SVC 5000
 #define INADDR_SVC "127.0.0.1"
 

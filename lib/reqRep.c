@@ -81,6 +81,7 @@ void deserializeMusicMessage(buffer_t buff, generic quoi)
 
 void serializeMusicMessage(generic quoi, buffer_t buff){
     MusicMessage *msg = (MusicMessage *)quoi;
+    int i;
     
     char time_str[MAX_BUFF];
 
@@ -92,7 +93,7 @@ void serializeMusicMessage(generic quoi, buffer_t buff){
         strcat(buff, time_str);
         strcat(buff, "|");
     
-        for (int i = 0; i < MAX_BUFF; i++) {
+        for ( i = 0; i < MAX_BUFF; i++) {
             if (msg->playlist[i][0] == '\0') {
                 break;
             }
@@ -109,7 +110,7 @@ void serializeMusicMessage(generic quoi, buffer_t buff){
         strcat(buff, time_str);
         strcat(buff, "|");
     
-        for (int i = 0; i < MAX_BUFF; i++) {
+        for ( i = 0; i < MAX_BUFF; i++) {
             if (msg->playlist[i][0] == '\0') {
                 break;
             }

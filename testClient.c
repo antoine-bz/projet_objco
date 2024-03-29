@@ -2,7 +2,7 @@
 #include "./lib/objCoLib.h"
 
 #define PORT_SVC 5000
-#define INADDR_SVC "127.0.0.1"
+#define INADDR_SVC "192.168.1.100"
 
 int main(){
     char reponse[MAX_BUFF];
@@ -15,6 +15,9 @@ int main(){
 
     strcpy(addrIPsrv, INADDR_SVC);
     port = PORT_SVC;
+
+
+    printf("l'ip est %s\n", addrIPsrv);
 
     // Demande d’une connexion au service
     sockDial.mode = SOCK_STREAM;

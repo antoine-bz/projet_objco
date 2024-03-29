@@ -22,6 +22,7 @@
 #define PIN_BASE 100
 #define ADDRESS_MCP23008 0x20
 #define I2C_ADDRESS_LCD 0x21 
+#define I2C_ADDRESS 0x70
 
 #define RS 1
 #define E 2
