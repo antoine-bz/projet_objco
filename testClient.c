@@ -2,7 +2,7 @@
 #include "./lib/objCoLib.h"
 
 #define PORT_SVC 5000
-#define INADDR_SVC "192.168.1.102"
+#define INADDR_SVC "192.168.122.1"
 
 int main(){
     char reponse[MAX_BUFF];
