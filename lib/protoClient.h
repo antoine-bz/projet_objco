@@ -78,3 +78,10 @@ extern socket_t sockDial;
  * \details Cette fonction attend la fin de la musique
 */
 void waitForMusicToEnd(libvlc_instance_t *vlcInstance, libvlc_media_player_t *mp);
+
+/**
+ * @brief 
+ * 
+ * @param sockDial 
+ */
+void closeSocket(socket_t* sockDial);

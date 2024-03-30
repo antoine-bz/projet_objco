@@ -41,7 +41,8 @@ void client(char *addrIPsrv, short port) {
         if (buffer.type == PLAYLIST_RETURN) {
             printf("\nPlaylist:\n");
             tailleTableau = sizeof(buffer.playlist) / sizeof(buffer.playlist[0]);
-            for (int i = 0; i < tailleTableau; i++) {
+            int i;
+            for (i = 0; i < tailleTableau; i++) {
                 if (strlen(buffer.playlist[i]) > 0) {
                     printf("%d - %s\n", i, buffer.playlist[i]);
                 }
@@ -141,3 +142,6 @@ void waitForMusicToEnd(libvlc_instance_t *vlcInstance, libvlc_media_player_t *mp
     libvlc_release(vlcInstance);
 }
 
+void closeSocket(socket_t* sockDial){
+    close(sockDial->sock);
+}
