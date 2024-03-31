@@ -1,5 +1,12 @@
 #include "objCoLib.h"
 
+#ifdef JOYPI
+
+int hexValues[] = {0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f};
+
+#endif
+
+
 // log 
 void log_callback(void *data, int level, const libvlc_log_t *ctx, const char *fmt, va_list args) {
     char *str = malloc(1024);
