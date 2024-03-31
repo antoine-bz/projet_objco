@@ -39,8 +39,8 @@ clientCCC:
 
 
 serveurJOYPI:
-	cd lib && make libServer.a CCC=$(CCC) CFLAGS="-DJOYPI"
-	$(CCC) main.c -DSERVEUR -o serveurJOYPI.exe -lServer -L./lib -lvlc
+	cd lib && make libServer.a CFLAGS="-DJOYPI"
+	gcc main.c -DSERVEUR -o serveurJOYPI.exe -lServer -L./lib -lvlc -lm -lrt -lwiringPi -lwiringPiDev -lcrypt -lpthread
 	rm -f *.a
 
 

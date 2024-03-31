@@ -9,6 +9,7 @@
         "array": "c",
         "string": "c",
         "string_view": "c",
-        "any": "c"
+        "any": "c",
+        "cstdlib": "c"
     }
 }
