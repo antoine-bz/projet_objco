@@ -3,7 +3,7 @@
 
 void deserializeMusicMessage(buffer_t buff, generic quoi)
 {
-    //printf("Deserialized message: %s\n", buff);
+    printf("Deserialized message: %s\n", buff);
     MusicMessage *msg = (MusicMessage *)quoi;
     ////////////////DEFINI TYPE/////////////////////
     char type[MAX_BUFF];
@@ -140,5 +140,5 @@ void serializeMusicMessage(generic quoi, buffer_t buff){
         break;
     }
 
-    //printf("Serialized message: %s\n", buff);
+    printf("Serialized message: %s\n", buff);
 }

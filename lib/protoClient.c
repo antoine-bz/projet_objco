@@ -27,6 +27,10 @@ void client(char *addrIPsrv, short port) {
             for (int i = 0; i < buffer.playlist_size; i++) {
                 printf("%d - %s\n", i + 1, buffer.playlist[i]);
             }
+            
+            buffer.type= OK;
+            envoyer(&sockDial, &buffer, (pFct)serializeMusicMessage);
+
             printf("\nChoose a music (0 to quit): ");
             scanf("%d", &choix);
             if (choix == 0) {
@@ -38,21 +42,31 @@ void client(char *addrIPsrv, short port) {
             buffer.current_music = choix - 1; // Adjust the choice for a 0-based index
             buffer.type = SEND_MUSIC_CHOICE;
             envoyer(&sockDial, &buffer, (pFct)serializeMusicMessage);
-            recevoir(&sockDial, &reponse, NULL); // Wait for the server's OK
+            recevoir(&sockDial, &buffer, (pFct)deserializeMusicMessage);
 
+            if (buffer.type != OK) {
+                printf("Error receiving music choice confirmation from the server.\n");
+                break;
+            }
+            
+
+            recevoir(&sockDial, &buffer, (pFct)deserializeMusicMessage);
+            // reception de MUSIC RETURN ET TRAITEMENT
+        }
+        buffer.type = OK;
+        envoyer(&sockDial, &buffer, (pFct)serializeMusicMessage);
+        sleep(1);
             // Play the chosen music
             streamAudioClient(addrIPsrv); // This function should block until the end of the music
-            printf("Playback finished. Would you like to choose another song? (1 for yes, 0 for no)\n");
+
+            // Ask the user if they want to choose another song
+            printf("Playback finished. Would you like to choose/play another song? (1 for yes, 0 for no)\n");
             scanf("%d", &choix);
             if (choix == 0) {
                 client_connected = 0; // If the user does not want to continue, end the loop
             }
             // No need to reset the buffer here since it will be set again at the beginning of the loop
-        } else {
-            // Handle errors
-            printf("Error receiving data from the server.\n");
-            break;
-        }
+      
     }
 
     // Clean up and close the socket when done
