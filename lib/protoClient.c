@@ -1,85 +1,65 @@
 #include "protoClient.h"
 
 socket_t sockDial;
-int mute;  // Local mute variable
+int mute; // Local mute variable
 
 void client(char *addrIPsrv, short port) {
     char reponse[MAX_BUFF];
-    char musicName[MAX_BUFF];
-    MusicMessage buffer = {0};  // Initialize buffer to zero
-    int choix, tailleTableau;
-    int client_connected = 1;  // Variable to control the loop, based on client connection status.
-    char current_music_str[10];
+    MusicMessage buffer = {0};
+    int choix;
+    int client_connected = 1;
 
-    // Demande d’une connexion au service
+    // Initialization of the connection to the service
     sockDial.mode = SOCK_STREAM;
     sockDial.sock = connecter(addrIPsrv, port);
     sockDial.type = SOCK_CLIENT;
     ouvrirSocket(&sockDial, SOCK_STREAM, addrIPsrv, port);
 
     while (client_connected) {
+        // Request the playlist from the server
         buffer.type = SEND_MUSIC_REQUEST;
-        envoyer(&sockDial, &buffer, (pFct) serializeMusicMessage);
-        recevoir(&sockDial, &buffer, (pFct) deserializeMusicMessage);
+        envoyer(&sockDial, &buffer, (pFct)serializeMusicMessage);
+        recevoir(&sockDial, &buffer, (pFct)deserializeMusicMessage);
 
         if (buffer.type == PLAYLIST_RETURN) {
+            // Display playlist and get user choice
             printf("\nPlaylist:\n");
-            tailleTableau = sizeof(buffer.playlist) / sizeof(buffer.playlist[0]);
-            for (int i = 0; i < tailleTableau; i++) {
-                if (strlen(buffer.playlist[i]) > 0) {
-                    printf("%d - %s\n", i, buffer.playlist[i]);
-                }
+            for (int i = 0; i < buffer.playlist_size; i++) {
+                printf("%d - %s\n", i + 1, buffer.playlist[i]);
             }
-            printf("\nChoisir une musique (%d pour quitter):\n", DISCONNECT_CHOICE);
+            printf("\nChoose a music (0 to quit): ");
             scanf("%d", &choix);
-
-            if (choix == DISCONNECT_CHOICE) {
+            if (choix == 0) {
                 client_connected = 0;
                 break;
             }
 
-            buffer.current_music = choix;
+            // Send the music choice to the server
+            buffer.current_music = choix - 1; // Adjust the choice for a 0-based index
             buffer.type = SEND_MUSIC_CHOICE;
+            envoyer(&sockDial, &buffer, (pFct)serializeMusicMessage);
+            recevoir(&sockDial, &reponse, NULL); // Wait for the server's OK
 
-            envoyer(&sockDial, &buffer, (pFct) serializeMusicMessage);
-            recevoir(&sockDial, &reponse, NULL);
-
-
-            sprintf(current_music_str, "%d", buffer.current_music);
-            strcpy(musicName, "current_");
-            strcat(musicName, current_music_str);
-            streamAudioClient(addrIPsrv);  // Use the IP to stream audio
-            if (strcmp(reponse, "OK") != 0) {
-                printf("Erreur de reception du choiiiiiiix\n");
-                exit(EXIT_FAILURE);
+            // Play the chosen music
+            streamAudioClient(addrIPsrv); // This function should block until the end of the music
+            printf("Playback finished. Would you like to choose another song? (1 for yes, 0 for no)\n");
+            scanf("%d", &choix);
+            if (choix == 0) {
+                client_connected = 0; // If the user does not want to continue, end the loop
             }
+            // No need to reset the buffer here since it will be set again at the beginning of the loop
         } else {
-            printf("Erreur de reception de la playlist\n");
-            exit(EXIT_FAILURE);
-        }
-
-        printf("Voulez-vous choisir une autre musique (1 pour oui, %d pour non) ?\n", DISCONNECT_CHOICE);
-        scanf("%d", &choix);
-        if (choix == DISCONNECT_CHOICE) {
-            client_connected = 0;  // User chose to not continue
+            // Handle errors
+            printf("Error receiving data from the server.\n");
+            break;
         }
     }
 
-    closeSocket(&sockDial);  // Implement this function as needed
+    // Clean up and close the socket when done
+    printf("Client disconnecting...\n");
+    closeSocket(&sockDial);
 }
 
 void closeSocket(socket_t* sockDial) {
     close(sockDial->sock);
 }
-
-// The following functions need to be defined according to your application:
-// - connecter
-// - ouvrirSocket
-// - envoyer
-// - recevoir
-// - serializeMusicMessage
-// - deserializeMusicMessage
-// - streamAudioClient
-// - waitForMusicToEnd
-
-// If you have signal handlers or other functionality, make sure to include those too.

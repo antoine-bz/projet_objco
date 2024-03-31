@@ -66,7 +66,7 @@ void server (char *addrIPsrv, short server_port);
  * \return void
  * \details Cette fonction gère les demandes des clients
 */
-void handle_client(socket_t *client_socket);
+int handle_client(socket_t *client_socket);
 
 /**
  * \fn void myRadio()

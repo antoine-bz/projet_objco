@@ -77,38 +77,29 @@ void server (char *addrIPsrv, short server_port){
     }
 
     while (1) {
-        // Attendre une connexion entrante
-        socket_t client_socket = accepterConnection(&server_socket);
-
-        // Dialogue avec le client
+       socket_t client_socket = accepterConnection(&server_socket);
         pid_t pid = fork();
-        if (pid == 0) {
 
-            // Fermer le socket du serveur
+        if (pid == 0) { // Child process
             fermerSocket(&server_socket);
-            
-            while (1)
-            {
-                // Gérer la requête du client
-                handle_client(&client_socket);
-                
-            }
+            // Here, the client communication is handled in a loop, and exit is called when done.
+            while (handle_client(&client_socket)) { /* Handle client communication */ }
+            exit(EXIT_SUCCESS);
         }
-        else if (pid == -1) {
-            perror("fork");
-            exit(1);
+        else if (pid > 0) { // Parent process
+            fermerSocket(&client_socket); // The parent doesn't need this anymore.
         }
         else {
-        // Fermer la connexion avec le client
-        fermerSocket(&client_socket);
+            perror("fork");
+            exit(EXIT_FAILURE);
         }
-
+    
     }
 
 }
 
 
-void handle_client(socket_t *client_socket) {
+int handle_client(socket_t *client_socket) {
     buffer_t request;
     MusicMessage musicMessage;
     MusicMessage musicResponse;
@@ -118,18 +109,7 @@ void handle_client(socket_t *client_socket) {
     // on fait un switch pour savoir quel commande a ete envoye par le client
     switch (musicMessage.type) {
         case SEND_MUSIC_REQUEST:
-            printf("SEND_MUSIC_REQUEST received from client\n\n");
-            // si currentMusic est vide, on envoie la playlist au client
-            if (*isChoosing == FALSE && *isPlaying == FALSE) {
-                sendPlaylist(client_socket);
-            } else {
-                // si le client est en train de choisir une musique, on attend qu'il ait fini
-                if (*isChoosing == TRUE) {
-                    while (*isChoosing == TRUE);
-                }
-                // sinon on envoie la musique courante au client
-                sendCurrentMusic(client_socket);                
-            }
+            sendPlaylist(client_socket);
             break;
 
         case SEND_MUSIC_CHOICE:
@@ -147,26 +127,25 @@ void handle_client(socket_t *client_socket) {
             break;
 
         case PLAYLIST_REQUEST:
-            printf("PLAYLIST_REQUEST received from client\n\n");
-            kill (*musicPid, SIGKILL);
+           if (*isPlaying) {
+                kill(*musicPid, SIGKILL);
+            }
             *isPlaying = FALSE;
             *currentMusic = UNDEFINED;
-            *isChoosing = TRUE;
+            *isChoosing = TRUE; // Allow the client to make a new choice.
             sendPlaylist(client_socket);
             break;
 
         case QUIT:
             printf("Client disconnected\n\n");
-            // on ferme la connexion avec le client
-            fermerSocket(client_socket);
-            exit(0);
+            return 0;
             break;
         
         default:
             // on envoie un message d'erreur au client
             envoyer(client_socket, "Commande inconnue", NULL);
             break;
-    }
+    }return 1;
 }
 
 
@@ -196,7 +175,7 @@ void sendCurrentMusic(socket_t *client_socket) {
 
 void sendPlaylist(socket_t *client_socket) {
     MusicMessage musicMessage;
-    *isChoosing = TRUE;
+    *isChoosing = FALSE;
 
     // on recupere la playlist
     musicMessage = retrievePlaylist();
@@ -223,7 +202,7 @@ void sendPlaylist(socket_t *client_socket) {
 
 }
 
-
+/*
 void myRadio(){
     MusicMessage musicMessage; 
     pid_t musicPlayPid, buttonPid, segmentPid;
@@ -238,9 +217,9 @@ void myRadio(){
 
     while (1) {
         
-        // on attend que le client ait choisi une musique
-        while (*isChoosing == TRUE){
-            sleep(1);
+        if (*isChoosing || *currentMusic == UNDEFINED) {
+            sleep(1); // Utiliser sleep pour éviter la consommation inutile de CPU
+            continue; // Revenir au début de la boucle while
         }
 
 
@@ -323,6 +302,98 @@ void myRadio(){
 
     exit(EXIT_SUCCESS);    
 }
+*/
+void myRadio() {
+    MusicMessage musicMessage; 
+    pid_t musicPlayPid, buttonPid, segmentPid;
+    int fd = init_7segment();
+    int lcd = initLCD();
+    
+    // Initialisation et récupération de la playlist
+    musicMessage = retrievePlaylist();
+    
+    while (1) {
+        // Attendre que le client fasse un choix ou que la musique courante ait fini de jouer
+        if (*isChoosing || *currentMusic == UNDEFINED) {
+            sleep(1); // Utiliser sleep pour éviter la consommation inutile de CPU
+            continue; // Revenir au début de la boucle while
+        }
+        
+        // Si une musique est choisie et qu'on n'est pas en train de jouer, lancer la musique
+        if (!*isPlaying && *currentMusic != UNDEFINED) {
+            musicPlayPid = fork();
+            if (musicPlayPid == 0) { // Child process
+                *musicPid = getpid();
+                *isPlaying = TRUE;
+
+                // Construire le chemin complet du fichier
+                char path[MAX_BUFF];
+                snprintf(path, sizeof(path), "playlist/%s", musicMessage.playlist[*currentMusic]);
+
+                // Afficher le nom de la musique sur l'écran LCD et jouer la musique
+                writeLCD(lcd, 0, 0, musicMessage.playlist[*currentMusic]);
+                streamAudioServer(path);
+                exit(EXIT_SUCCESS);
+            }
+        }
+        buttonPid = fork();
+        if (buttonPid == -1) {
+            perror("Erreur lors de la création du processus fils");
+            exit(EXIT_FAILURE);
+        } else
+        if (buttonPid == 0) {
+            buttonHandler(*musicPid);
+            exit(EXIT_SUCCESS);
+        }
+
+        segmentPid = fork();
+        if (segmentPid == -1) {
+            perror("Erreur lors de la création du processus fils");
+            exit(EXIT_FAILURE);
+        } else
+        if (segmentPid == 0) {
+            int sec = 0;
+            // on affiche le temps de la musique
+            while (*isPlaying == TRUE) {
+                afficher_7segment_sec(fd, sec);
+                sleep(1);
+                sec++;
+            }
+            exit(EXIT_SUCCESS);
+        }
+        
+
+        waitpid(musicPlayPid, NULL, 0);
+        
+        sleep(1);
+
+        // on passe à la musique suivante
+        *isPlaying = FALSE;
+        printf("Playing next music...\n");
+        kill(buttonPid, SIGKILL);
+        kill(segmentPid, SIGKILL);
+  
+        
+        *currentMusic=*currentMusic+1;
+        
+        if (*currentMusic == musicMessage.playlist_size+1) {
+            *currentMusic = 0;
+        }
+               
+
+    }
+        // Gestion des boutons et affichage 7-segments (buttonPid et segmentPid)
+
+        // Attendre que la musique en cours finisse de jouer
+        int status;
+        waitpid(musicPlayPid, &status, 0);
+        *isPlaying = FALSE;
+        *currentMusic = UNDEFINED; // Réinitialiser currentMusic pour indiquer qu'on attend le prochain choix
+        
+        // On ne passe pas à la musique suivante automatiquement, donc on retire la partie qui incrémentait currentMusic
+    }
+    // Fermeture des ressources et sortie de la fonction
+
 
 
 static void signalHandler(int sig) {
