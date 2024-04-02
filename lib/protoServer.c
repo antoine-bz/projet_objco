@@ -9,12 +9,16 @@ int *musicPid;
 int shm_id, shm_size;
 void *shm_ptr;
 
+int fd, lcd;
+
 
 
 
 void server (char *addrIPsrv, short server_port){
     socket_t server_socket;
     pid_t pid;
+    lcd = initLCD();
+    fd = init_7segment();
 
     // on cree la memoire partagee
     CHECK(shm_id = shm_open("maZone", O_CREAT | O_RDWR, S_IRWXU), "shm_open error");
@@ -223,9 +227,8 @@ void sendPlaylist(socket_t *client_socket) {
 
 void myRadio(){
     MusicMessage musicMessage; 
-    pid_t musicPlayPid, buttonPid, segmentPid;
-    int fd = init_7segment();
-    int lcd = initLCD();
+    pid_t musicPlayPid, compoPid;
+    
     // Construire le chemin complet du fichier
     char path[MAX_BUFF];
     
@@ -233,6 +236,9 @@ void myRadio(){
     musicMessage = retrievePlaylist();
 
     while (1) {
+        writeLCD(lcd,0,0, "En attente de   musique...");
+
+        afficher_7segment_sec(fd, 0);
         
         // on attend que le client ait choisi une musique
         while (*isChoosing == TRUE || *currentMusic == UNDEFINED) {
@@ -254,30 +260,23 @@ void myRadio(){
             snprintf(path, sizeof(path)+9, "playlist/%s", musicMessage.playlist[*currentMusic]);
             printf("path: %s\n", path);
 
-            // on affiche le nom de la musique sur l'ecran LCD
-            writeLCD(lcd,0,0, musicMessage.playlist[*currentMusic]);
 
             streamAudioServer(path); // Jouer le fichier audio
             exit(EXIT_SUCCESS);
         }
-        
-        buttonPid = fork();
-        if (buttonPid == -1) {
-            perror("Erreur lors de la création du processus fils");
-            exit(EXIT_FAILURE);
-        } else
-        if (buttonPid == 0) {
-            buttonHandler(*musicPid);
-            exit(EXIT_SUCCESS);
-        }
 
-        segmentPid = fork();
-        if (segmentPid == -1) {
+        compoPid = fork();
+        if (compoPid == -1) {
             perror("Erreur lors de la création du processus fils");
             exit(EXIT_FAILURE);
         } else
-        if (segmentPid == 0) {
+        if (compoPid == 0) {
             int sec = 0;
+            // on affiche le nom de la musique sur l'ecran LCD
+            printf("allumage LCD\n");
+            writeLCD(lcd,0,0, "                                                        ");
+            writeLCD(lcd,0,0, musicMessage.playlist[*currentMusic]);
+            printf("allumage 7seg\n");
             // on affiche le temps de la musique
             while (*isPlaying == TRUE) {
                 afficher_7segment_sec(fd, sec);
@@ -287,18 +286,15 @@ void myRadio(){
             exit(EXIT_SUCCESS);
         }
         
-
+                
         waitpid(musicPlayPid, NULL, 0);
         
         sleep(1);
-
         // on passe à la musique suivante
         *isPlaying = FALSE;
         printf("Playing next music...\n");
-        kill(buttonPid, SIGKILL);
-        kill(segmentPid, SIGKILL);
+        kill(compoPid, SIGKILL);
   
-
 
     
         // on remet currentMusic à vide
@@ -340,49 +336,6 @@ static void signalHandler(int sig) {
             break;
     }
 }
-
-
-int buttonHandler(pid_t pid)
-{
-	#ifdef JOYPI
-
-	wiringPiSetup () ;
-	pinMode (PIN_IN_GAUCHE, INPUT) ;
-    pinMode (PIN_IN_DROITE, INPUT) ;
-    pinMode (PIN_IN_HAUT, INPUT) ;
-    pinMode (PIN_IN_BAS, INPUT) ;
-
-	while (1) {
-
-        if (digitalRead(PIN_IN_GAUCHE) == LOW)
-        {
-            //  musique précédente
-            *isPlaying = FALSE;
-            kill(pid, SIGKILL);
-            *currentMusic = *currentMusic - 2;
-            if (*currentMusic < 0) {
-                *currentMusic = 0;
-            }
-
-            return  1; // a completer
-        }
-        if (digitalRead(PIN_IN_DROITE) == LOW)
-        {
-            //  musique suivante
-            *isPlaying = FALSE;
-            kill(pid, SIGKILL);
-            *currentMusic = *currentMusic ;
-            if (*currentMusic == 0) {
-                *currentMusic = 0;
-            }
-            return 2; // a completer
-        }
-	}
-
-    #endif
-	return 0 ;
-}
-
 
 MusicMessage retrievePlaylist(){
     MusicMessage musicMessage;

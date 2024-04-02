@@ -2,9 +2,10 @@
 #include "./lib/objCoLib.h"
 
 #define PORT_SVC 5000
-#define INADDR_SVC "127.0.0.1"
+#define INADDR_SVC "192.168.1.101" //"192.168.1.101"
 
 int main(){
+    /*
     char reponse[MAX_BUFF];
     char envoie[MAX_BUFF];
     char addrIPsrv[MAX_BUFF];
@@ -53,4 +54,7 @@ int main(){
         envoyer(&sockDial, &message, (pFct) serializeMusicMessage);
         recevoir(&sockDial, &message, (pFct) deserializeMusicMessage);
    }
+   */
+
+    streamAudioClient(INADDR_SVC);
 }

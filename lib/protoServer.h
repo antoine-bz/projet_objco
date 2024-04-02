@@ -95,14 +95,6 @@ static void signalHandler(int sig);
 void sendPlaylist(socket_t *client_socket);
 
 /**
- * \fn int buttonHandler(pid_t pid)
- * \brief Fonction qui gère les boutons
- * \param pid PID du processus fils
- * \return int
-*/
-int buttonHandler(pid_t pid);
-
-/**
  * \fn void sendCurrentMusic(socket_t *client_socket)
  * \brief Fonction qui envoie la musique en cours de lecture au client
  * \param client_socket Pointeur sur le socket du client

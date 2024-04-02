@@ -2,7 +2,7 @@
 #include "./lib/objCoLib.h"
 
 #define PORT_SVC 5000
-#define INADDR_SVC "127.0.0.1"
+#define INADDR_SVC "0.0.0.0"
 
 int main(){
     

@@ -49,3 +49,6 @@ clean:
 	rm -f *.exe
 	rm -f *.a
 	cd lib && make clean
+
+copier:
+	cp -r lib/* /media/antoine/Antoine-USB/projet/lib

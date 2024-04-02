@@ -5,7 +5,7 @@ int mute; // Local mute variable
 
 void client(char *addrIPsrv, short port) {
     char reponse[MAX_BUFF];
-    MusicMessage buffer = {0};
+    MusicMessage buffer;
     int choix;
     int client_connected = 1;
 
