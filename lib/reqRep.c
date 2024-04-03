@@ -1,9 +1,10 @@
 
 #include "reqRep.h"
+#include <ncurses.h>
 
 void deserializeMusicMessage(buffer_t buff, generic quoi)
 {
-    printf("Deserialized message: %s\n", buff);
+    //printw("Deserialized message: %s\n", buff);
     MusicMessage *msg = (MusicMessage *)quoi;
     ////////////////DEFINI TYPE/////////////////////
     char type[MAX_BUFF];
@@ -25,7 +26,7 @@ void deserializeMusicMessage(buffer_t buff, generic quoi)
         msg->type = PLAYLIST_REQUEST;
     }
     else if (strcmp(type, "OK") == 0) {
-        msg->type = OK;
+        msg->type = OK_REQ;
     }
     else {
         printf("Erreur de type de message");
@@ -35,11 +36,35 @@ void deserializeMusicMessage(buffer_t buff, generic quoi)
     switch (msg->type)
     {
     case MUSIC_RETURN:
-    case PLAYLIST_RETURN: 
-        if (msg->type == MUSIC_RETURN) {
-            msg->current_music = atoi(strtok(NULL, "|"));
-            msg->playlist_size = atoi(strtok(NULL, "|"));
+        msg->current_music = atoi(strtok(NULL, "|"));
+        msg->playlist_size = atoi(strtok(NULL, "|"));
+        char *token2 = strtok(NULL, "|"); // Récupérer la partie de la chaîne après le délimiteur '|'
+        if (token2 != NULL) {
+            char music[MAX_BUFF]; // Stocker temporairement chaque nom de musique
+            int index = 0;
+            char *ptr = token2;
+            while (*ptr != '\0' && index < MAX_BUFF) {
+                int i = 0;
+                // Copier chaque caractère jusqu'à '/' ou la fin de la chaîne
+                while (*ptr != '/' && *ptr != '\0' && i < MAX_BUFF - 1) {
+                    music[i] = *ptr;
+                    ptr++;
+                    i++;
+                }
+                music[i] = '\0'; // Assurer une terminaison nulle
+                strncpy(msg->playlist[index], music, sizeof(msg->playlist[index]) - 1);
+                msg->playlist[index][sizeof(msg->playlist[index]) - 1] = '\0'; // Assurer une terminaison nulle
+                index++;
+                if (*ptr == '/') {
+                    ptr++; // Passer au prochain nom de musique s'il y en a un
+                }
+            }
         }
+        break;
+
+
+
+    case PLAYLIST_RETURN: 
         char *token = strtok(NULL, "|"); // Récupérer la partie de la chaîne après le délimiteur '|'
         msg->playlist_size = atoi(token); // Convertir la taille de la playlist en entier
         token = strtok(NULL, "|"); // Récupérer la partie de la chaîne après le délimiteur '|'
@@ -132,7 +157,7 @@ void serializeMusicMessage(generic quoi, buffer_t buff){
         strcpy(buff, "PLAYLIST_REQUEST|");
         printf("Request playlist\n");
         break;
-    case OK:
+    case OK_REQ:
         strcpy(buff, "OK|");
         break;
 
@@ -140,5 +165,5 @@ void serializeMusicMessage(generic quoi, buffer_t buff){
         break;
     }
 
-    printf("Serialized message: %s\n", buff);
+    //printf("Serialized message: %s\n", buff);
 }

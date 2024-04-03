@@ -6,9 +6,9 @@
 
 
 #include "reqRep.h"
+#include "objCoLib.h"
 #include <sys/types.h>
 #include <vlc/vlc.h>
-#include "objCoLib.h"
 
 /**
  * \def BITS

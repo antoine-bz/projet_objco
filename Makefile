@@ -1,11 +1,11 @@
 serveur: 
 	cd lib && make libServer.a
-	gcc  main.c -DSERVEUR -o serveur.exe -lServer -L./lib -lvlc
+	gcc  main.c -DSERVEUR -o serveur.exe -lServer -L./lib -lvlc -lncurses -lmenu
 	rm -f *.a
 
 client:
 	cd lib && make libClient.a
-	gcc main.c -o client.exe -DCLIENT -lClient -L./lib  -lvlc 
+	gcc main.c -o client.exe -DCLIENT -lClient -L./lib  -lvlc -lncurses -lmenu
 	rm -f *.a
 
 testClient:

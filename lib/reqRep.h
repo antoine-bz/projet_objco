@@ -70,7 +70,7 @@ typedef char buffer_t[MAX_BUFF];
 #define SEND_MUSIC_REQUEST    3
 #define MUSIC_RETURN          4
 #define PLAYLIST_REQUEST      5
-#define OK                    6
+#define OK_REQ                6
 #define QUIT                  8
 
 

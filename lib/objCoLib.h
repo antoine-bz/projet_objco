@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
+#include <ncurses.h>
+#include <menu.h>
 
 #ifdef JOYPI
 

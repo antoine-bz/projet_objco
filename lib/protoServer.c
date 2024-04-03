@@ -147,7 +147,7 @@ void handle_client(socket_t *client_socket) {
             MusicMessage musicMessage2;
             *currentMusic =  musicMessage.current_music;
 
-            musicMessage2.type = OK;
+            musicMessage2.type = OK_REQ;
             envoyer(client_socket, &musicMessage2, (pFct)serializeMusicMessage);
             *isChoosing = FALSE;
             sendCurrentMusic(client_socket);
@@ -164,6 +164,7 @@ void handle_client(socket_t *client_socket) {
 
         case QUIT:
             printf("Client disconnected\n\n");
+            *isChoosing = FALSE;
             // on ferme la connexion avec le client
             fermerSocket(client_socket);
             exit(0);
@@ -197,7 +198,7 @@ void sendCurrentMusic(socket_t *client_socket) {
     printf("Waiting for client to confirm...\n\n");
     recevoir(client_socket, &bufferMusic, (pFct) deserializeMusicMessage);
     printf("Client confirmed\n\n");
-    if (bufferMusic.type != OK) {
+    if (bufferMusic.type != OK_REQ) {
         exit(EXIT_FAILURE);
     }
 }
@@ -219,7 +220,9 @@ void sendPlaylist(socket_t *client_socket) {
 
     // on attend que le client ait choisi une musique
     recevoir(client_socket, &musicMessage, (pFct)deserializeMusicMessage);
-    if (musicMessage.type != OK) {
+    if (musicMessage.type != OK_REQ) {
+        printf("Error: client did not confirm\n");
+        *isChoosing = FALSE;
         exit(EXIT_FAILURE);
     }
 }
@@ -274,7 +277,9 @@ void myRadio(){
             int sec = 0;
             // on affiche le nom de la musique sur l'ecran LCD
             printf("allumage LCD\n");
+            // on efface l'ecran
             writeLCD(lcd,0,0, "                                                        ");
+            // on ecrit le nom de la musique
             writeLCD(lcd,0,0, musicMessage.playlist[*currentMusic]);
             printf("allumage 7seg\n");
             // on affiche le temps de la musique
@@ -303,7 +308,6 @@ void myRadio(){
         *isChoosing = FALSE;
         /*
         *currentMusic=*currentMusic+1;
-        
         if (*currentMusic == musicMessage.playlist_size+1) {
             *currentMusic = 0;
         }
