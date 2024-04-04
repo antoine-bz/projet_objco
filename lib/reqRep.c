@@ -65,9 +65,8 @@ void deserializeMusicMessage(buffer_t buff, generic quoi)
 
 
     case PLAYLIST_RETURN: 
+        msg->playlist_size = atoi(strtok(NULL, "|")); // Convertir la taille de la playlist en entier        
         char *token = strtok(NULL, "|"); // Récupérer la partie de la chaîne après le délimiteur '|'
-        msg->playlist_size = atoi(token); // Convertir la taille de la playlist en entier
-        token = strtok(NULL, "|"); // Récupérer la partie de la chaîne après le délimiteur '|'
         if (token != NULL) {
             char music[MAX_BUFF]; // Stocker temporairement chaque nom de musique
             int index = 0;

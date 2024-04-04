@@ -8,6 +8,7 @@
 #include "objCoLib.h"
 
 #include <stdio.h>
+#include <vlc/vlc.h>
 #include <dirent.h>
 #include <unistd.h>
 //#include <wiringPi.h>
@@ -46,6 +47,11 @@ extern int *musicPid;
 extern int shm_id;
 extern int shm_size;
 extern void *shm_ptr;
+
+
+extern libvlc_instance_t *inst;
+extern libvlc_media_t *m;
+extern libvlc_media_player_t *mp;
 
 
 /**

@@ -237,6 +237,8 @@ void client(char *addrIPsrv, short port) {
 
         // Play music
         streamAudioClient(addrIPsrv);
+
+        sleep(2); // Pause to read message
         
         // Ask the user if they want to choose another song
         if (client_connected){
@@ -257,6 +259,7 @@ void client(char *addrIPsrv, short port) {
                 client_connected = 0;
             }else{
                 // Request the playlist from the server
+                werase(playlist_win);
                 buffer.type = SEND_MUSIC_REQUEST;
                 envoyer(&sockDial, &buffer, (pFct)serializeMusicMessage);
                 recevoir(&sockDial, &buffer, (pFct)deserializeMusicMessage);
@@ -272,6 +275,7 @@ void client(char *addrIPsrv, short port) {
                 mvwprintw(playlist_win, window_y / 2 + 1, (window_x - 36) / 2, "Waiting for music from the server...");
                 // Print the window border
                 wrefresh(playlist_win);
+                sleep(2); // Pause to read message
             }
         }
     }

@@ -16,45 +16,6 @@ void log_callback(void *data, int level, const libvlc_log_t *ctx, const char *fm
 }
 
 
-void streamAudioServer(char *file_path) {
-    libvlc_instance_t *inst;
-    libvlc_media_t *m;
-    libvlc_media_player_t *mp;
-  
-    // Crée une nouvelle instance libVLC
-    inst = libvlc_new(0, NULL);
-
-    // Enregistre le callback de log
-    //libvlc_log_set(inst, log_callback, NULL);    
-
-    // Crée un nouvel objet média
-    m = libvlc_media_new_path(inst, file_path);
-    
-    // Ajoute des options de streaming au média
-    libvlc_media_add_option(m, ":sout=#transcode{acodec=mpga,ab=128,channels=2,samplerate=44100}:http{mux=ogg,dst=:8080/}");
-    libvlc_media_add_option(m, ":no-sout-rtp-sap");
-    libvlc_media_add_option(m, ":no-sout-standard-sap");
-    libvlc_media_add_option(m, ":sout-keep");
-
-    // Crée un lecteur média à partir du média
-    mp = libvlc_media_player_new_from_media(m);
-
-    // Ne plus avoir besoin du média
-    libvlc_media_release(m);
-
-    // Joue le média
-    libvlc_media_player_play(mp);
-
-    sleep(1);
-    // Attendre la fin de la lecture
-    while(libvlc_media_player_is_playing(mp));
-
-    // Nettoyage
-    libvlc_media_player_stop(mp);
-    libvlc_media_player_release(mp);
-    libvlc_release(inst);
-}
-
 void streamAudioClient(char *ip) {
     libvlc_instance_t *vlcInstance;
     libvlc_media_player_t *mp;
@@ -69,6 +30,8 @@ void streamAudioClient(char *ip) {
         printf("Could not initialize libVLC\n");
         return;
     }
+    // Enregistre le callback de log
+    //libvlc_log_set(vlcInstance, log_callback, NULL);  
         
     // Création d'un nouveau media pour le flux réseau
     media = libvlc_media_new_location(vlcInstance, url);
@@ -101,6 +64,7 @@ void streamAudioClient(char *ip) {
         napms(100); // Attente non bloquante de 100 millisecondes
         refresh(); // Rafraîchissement de l'affichage ncurses
     }
+    sleep(1);
         
     // Nettoyage
     libvlc_media_player_stop(mp);

@@ -11,6 +11,9 @@ void *shm_ptr;
 
 int fd, lcd;
 
+libvlc_instance_t *inst;
+libvlc_media_t *m;
+libvlc_media_player_t *mp;
 
 
 
@@ -19,6 +22,7 @@ void server (char *addrIPsrv, short server_port){
     pid_t pid;
     lcd = initLCD();
     fd = init_7segment();
+    inst = libvlc_new(0, NULL);
 
     // on cree la memoire partagee
     CHECK(shm_id = shm_open("maZone", O_CREAT | O_RDWR, S_IRWXU), "shm_open error");
@@ -264,7 +268,27 @@ void myRadio(){
             printf("path: %s\n", path);
 
 
-            streamAudioServer(path); // Jouer le fichier audio
+            // Crée un nouvel objet média
+            m = libvlc_media_new_path(inst, path);
+            
+            // Ajoute des options de streaming au média
+            libvlc_media_add_option(m, ":sout=#transcode{acodec=mpga,ab=128,channels=2,samplerate=44100}:http{mux=ogg,dst=:8080/}");
+            libvlc_media_add_option(m, ":no-sout-rtp-sap");
+            libvlc_media_add_option(m, ":no-sout-standard-sap");
+            libvlc_media_add_option(m, ":sout-keep");
+
+            // Crée un lecteur média à partir du média
+            mp = libvlc_media_player_new_from_media(m);
+
+            // Ne plus avoir besoin du média
+            libvlc_media_release(m);
+
+            // Joue le média
+            libvlc_media_player_play(mp);
+
+            sleep(1);
+            // Attendre la fin de la lecture
+            while(libvlc_media_player_is_playing(mp));
             exit(EXIT_SUCCESS);
         }
 
@@ -319,7 +343,10 @@ void myRadio(){
     *currentMusic = UNDEFINED;
     *isPlaying = FALSE;
     *isChoosing = FALSE;
-
+    // Nettoyage
+    libvlc_media_player_stop(mp);
+    libvlc_media_player_release(mp);
+    libvlc_release(inst);   
 
     exit(EXIT_SUCCESS);    
 }
@@ -332,6 +359,10 @@ static void signalHandler(int sig) {
             printf("\nFermeture du serveur...\n");
             CHECK(munmap(shm_ptr, shm_size) == 0, "munmap error");
             CHECK(close(shm_id) == 0, "close error"); 
+            // Nettoyage
+            libvlc_media_player_stop(mp);
+            libvlc_media_player_release(mp);
+            libvlc_release(inst);
             exit(EXIT_SUCCESS);
             break;
 
